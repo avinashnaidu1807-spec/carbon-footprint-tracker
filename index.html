@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Track, understand, and reduce your carbon footprint with personalized insights and actionable tips. Join the movement for a greener planet.">
+    <meta name="keywords" content="carbon footprint, sustainability, climate change, eco-friendly, carbon tracker, green living">
+    <meta name="author" content="EcoTrack">
+    <title>EcoTrack — Carbon Footprint Awareness Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Particle Canvas Background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav id="main-nav" class="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo">
+                <i class="fas fa-leaf"></i>
+                <span>EcoTrack</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#hero" class="nav-link active">Home</a></li>
+                <li><a href="#calculator" class="nav-link">Calculator</a></li>
+                <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="#tips" class="nav-link">Tips</a></li>
+                <li><a href="#tracker" class="nav-link">Tracker</a></li>
+                <li><a href="#pledge" class="nav-link">Pledge</a></li>
+            </ul>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero-section">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-globe-americas"></i>
+                <span>Join 50,000+ Eco Warriors</span>
+            </div>
+            <h1 class="hero-title">
+                Understand Your <span class="gradient-text">Carbon Footprint</span>
+                <br>& Take Action Today
+            </h1>
+            <p class="hero-subtitle">
+                Track your daily carbon emissions, get personalized insights, and discover simple actions 
+                to reduce your environmental impact. Every small step counts towards a greener planet.
+            </p>
+            <div class="hero-actions">
+                <a href="#calculator" class="btn btn-primary" id="hero-cta-calculate">
+                    <i class="fas fa-calculator"></i>
+                    Calculate My Footprint
+                </a>
+                <a href="#tips" class="btn btn-secondary" id="hero-cta-learn">
+                    <i class="fas fa-lightbulb"></i>
+                    Learn to Reduce
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-number" data-target="4.7">0</span>
+                    <span class="hero-stat-unit">tons CO₂</span>
+                    <span class="hero-stat-label">World Avg / Person / Year</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number" data-target="16">0</span>
+                    <span class="hero-stat-unit">tons CO₂</span>
+                    <span class="hero-stat-label">US Avg / Person / Year</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number" data-target="2">0</span>
+                    <span class="hero-stat-unit">tons CO₂</span>
+                    <span class="hero-stat-label">Target by 2050</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="earth-container">
+                <div class="earth">
+                    <div class="earth-glow"></div>
+                </div>
+                <div class="orbit orbit-1">
+                    <div class="orbit-dot"><i class="fas fa-car"></i></div>
+                </div>
+                <div class="orbit orbit-2">
+                    <div class="orbit-dot"><i class="fas fa-bolt"></i></div>
+                </div>
+                <div class="orbit orbit-3">
+                    <div class="orbit-dot"><i class="fas fa-utensils"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="mouse">
+                <div class="wheel"></div>
+            </div>
+            <p>Scroll to explore</p>
+        </div>
+    </section>
+
+    <!-- Carbon Calculator Section -->
+    <section id="calculator" class="section calculator-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="fas fa-calculator"></i> Calculator</span>
+                <h2 class="section-title">Calculate Your Carbon Footprint</h2>
+                <p class="section-subtitle">Answer a few simple questions about your lifestyle to estimate your annual carbon emissions.</p>
+            </div>
+
+            <div class="calculator-wrapper">
+                <!-- Progress Bar -->
+                <div class="calc-progress">
+                    <div class="calc-progress-bar" id="calc-progress-bar" style="width: 25%"></div>
+                    <div class="calc-progress-steps">
+                        <div class="calc-step active" data-step="1">
+                            <div class="step-icon"><i class="fas fa-car"></i></div>
+                            <span>Transport</span>
+                        </div>
+                        <div class="calc-step" data-step="2">
+                            <div class="step-icon"><i class="fas fa-bolt"></i></div>
+                            <span>Energy</span>
+                        </div>
+                        <div class="calc-step" data-step="3">
+                            <div class="step-icon"><i class="fas fa-utensils"></i></div>
+                            <span>Food</span>
+                        </div>
+                        <div class="calc-step" data-step="4">
+                            <div class="step-icon"><i class="fas fa-shopping-bag"></i></div>
+                            <span>Lifestyle</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculator Forms -->
+                <div class="calc-forms">
+                    <!-- Step 1: Transport -->
+                    <div class="calc-form active" id="calc-step-1">
+                        <h3 class="calc-form-title"><i class="fas fa-car"></i> Transportation</h3>
+                        <p class="calc-form-desc">How do you get around? Your daily commute and travel habits play a big role.</p>
+                        
+                        <div class="form-group">
+                            <label for="car-km">Weekly car travel (km)</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-road"></i>
+                                <input type="number" id="car-km" min="0" value="100" placeholder="e.g., 100">
+                                <span class="input-unit">km/week</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="car-type">Vehicle type</label>
+                            <div class="select-wrapper">
+                                <i class="fas fa-car-side"></i>
+                                <select id="car-type">
+                                    <option value="none">I don't drive</option>
+                                    <option value="petrol" selected>Petrol / Gasoline</option>
+                                    <option value="diesel">Diesel</option>
+                                    <option value="hybrid">Hybrid</option>
+                                    <option value="electric">Electric</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="public-transport">Weekly public transport trips</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-bus"></i>
+                                <input type="number" id="public-transport" min="0" value="5" placeholder="e.g., 5">
+                                <span class="input-unit">trips/week</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="flights-year">Flights per year</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-plane"></i>
+                                <input type="number" id="flights-year" min="0" value="2" placeholder="e.g., 2">
+                                <span class="input-unit">flights/year</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Energy -->
+                    <div class="calc-form" id="calc-step-2">
+                        <h3 class="calc-form-title"><i class="fas fa-bolt"></i> Home Energy</h3>
+                        <p class="calc-form-desc">Your home energy use is a significant part of your carbon footprint.</p>
+                        
+                        <div class="form-group">
+                            <label for="electricity">Monthly electricity bill ($)</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-plug"></i>
+                                <input type="number" id="electricity" min="0" value="80" placeholder="e.g., 80">
+                                <span class="input-unit">$/month</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="gas-bill">Monthly gas/heating bill ($)</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-fire"></i>
+                                <input type="number" id="gas-bill" min="0" value="50" placeholder="e.g., 50">
+                                <span class="input-unit">$/month</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="renewable">Do you use renewable energy?</label>
+                            <div class="select-wrapper">
+                                <i class="fas fa-solar-panel"></i>
+                                <select id="renewable">
+                                    <option value="none" selected>No renewable energy</option>
+                                    <option value="partial">Partially (some solar/wind)</option>
+                                    <option value="full">Fully renewable</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="household-size">Household size</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-users"></i>
+                                <input type="number" id="household-size" min="1" value="2" placeholder="e.g., 2">
+                                <span class="input-unit">people</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Food -->
+                    <div class="calc-form" id="calc-step-3">
+                        <h3 class="calc-form-title"><i class="fas fa-utensils"></i> Food & Diet</h3>
+                        <p class="calc-form-desc">What you eat has a surprising impact on your carbon footprint.</p>
+                        
+                        <div class="form-group">
+                            <label for="diet-type">Diet type</label>
+                            <div class="select-wrapper">
+                                <i class="fas fa-seedling"></i>
+                                <select id="diet-type">
+                                    <option value="heavy-meat">Heavy meat eater (daily meat)</option>
+                                    <option value="medium-meat" selected>Medium meat eater (few times/week)</option>
+                                    <option value="low-meat">Low meat eater (once/week)</option>
+                                    <option value="pescatarian">Pescatarian</option>
+                                    <option value="vegetarian">Vegetarian</option>
+                                    <option value="vegan">Vegan</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="food-waste">Weekly food waste</label>
+                            <div class="select-wrapper">
+                                <i class="fas fa-trash-alt"></i>
+                                <select id="food-waste">
+                                    <option value="high">High — I throw away a lot</option>
+                                    <option value="medium" selected>Medium — Some waste</option>
+                                    <option value="low">Low — Very little waste</option>
+                                    <option value="none">Almost none — I compost too</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="local-food">How often do you buy local/organic?</label>
+                            <div class="select-wrapper">
+                                <i class="fas fa-store"></i>
+                                <select id="local-food">
+                                    <option value="never">Never</option>
+                                    <option value="sometimes" selected>Sometimes</option>
+                                    <option value="often">Often</option>
+                                    <option value="always">Always</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Lifestyle -->
+                    <div class="calc-form" id="calc-step-4">
+                        <h3 class="calc-form-title"><i class="fas fa-shopping-bag"></i> Lifestyle & Consumption</h3>
+                        <p class="calc-form-desc">Your shopping habits and lifestyle choices also contribute.</p>
+                        
+                        <div class="form-group">
+                            <label for="clothing">New clothing items per month</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-tshirt"></i>
+                                <input type="number" id="clothing" min="0" value="3" placeholder="e.g., 3">
+                                <span class="input-unit">items/month</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="electronics">Electronics purchases per year</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-laptop"></i>
+                                <input type="number" id="electronics" min="0" value="2" placeholder="e.g., 2">
+                                <span class="input-unit">items/year</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="recycling">How often do you recycle?</label>
+                            <div class="select-wrapper">
+                                <i class="fas fa-recycle"></i>
+                                <select id="recycling">
+                                    <option value="never">Never</option>
+                                    <option value="sometimes">Sometimes</option>
+                                    <option value="often" selected>Often</option>
+                                    <option value="always">Always — Everything possible</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="streaming">Daily screen/streaming hours</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-tv"></i>
+                                <input type="number" id="streaming" min="0" value="4" placeholder="e.g., 4">
+                                <span class="input-unit">hrs/day</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="calc-nav">
+                    <button class="btn btn-outline" id="calc-prev" disabled>
+                        <i class="fas fa-arrow-left"></i> Previous
+                    </button>
+                    <button class="btn btn-primary" id="calc-next">
+                        Next <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="btn btn-primary btn-glow hidden" id="calc-submit">
+                        <i class="fas fa-chart-pie"></i> Calculate My Footprint
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results / Dashboard Section -->
+    <section id="dashboard" class="section dashboard-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="fas fa-chart-bar"></i> Dashboard</span>
+                <h2 class="section-title">Your Carbon Dashboard</h2>
+                <p class="section-subtitle">Visual breakdown of your carbon footprint. Use the calculator above to generate your personalized results.</p>
+            </div>
+
+            <div class="dashboard-grid" id="dashboard-content">
+                <!-- Total Footprint Card -->
+                <div class="dash-card dash-card-total">
+                    <div class="dash-card-header">
+                        <h3>Annual Carbon Footprint</h3>
+                        <div class="dash-card-icon"><i class="fas fa-globe"></i></div>
+                    </div>
+                    <div class="dash-total-display">
+                        <span class="dash-total-number" id="total-footprint">—</span>
+                        <span class="dash-total-unit">tons CO₂/year</span>
+                    </div>
+                    <div class="dash-total-comparison" id="comparison-text">
+                        Complete the calculator to see your results
+                    </div>
+                    <div class="dash-total-bar-wrapper">
+                        <div class="dash-total-bar">
+                            <div class="dash-total-bar-fill" id="comparison-bar" style="width: 0%"></div>
+                            <div class="dash-total-bar-target" style="left: 12.5%">
+                                <span>2050 Target</span>
+                            </div>
+                        </div>
+                        <div class="dash-bar-labels">
+                            <span>0</span>
+                            <span>4</span>
+                            <span>8</span>
+                            <span>12</span>
+                            <span>16</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donut Chart Card -->
+                <div class="dash-card dash-card-chart">
+                    <div class="dash-card-header">
+                        <h3>Breakdown by Category</h3>
+                        <div class="dash-card-icon"><i class="fas fa-chart-pie"></i></div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="footprint-donut-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown Cards -->
+                <div class="dash-card dash-card-category" id="cat-transport">
+                    <div class="category-icon transport-icon"><i class="fas fa-car"></i></div>
+                    <div class="category-info">
+                        <h4>Transport</h4>
+                        <span class="category-value" id="cat-transport-val">— tons</span>
+                    </div>
+                    <div class="category-bar">
+                        <div class="category-bar-fill" id="cat-transport-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="dash-card dash-card-category" id="cat-energy">
+                    <div class="category-icon energy-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="category-info">
+                        <h4>Energy</h4>
+                        <span class="category-value" id="cat-energy-val">— tons</span>
+                    </div>
+                    <div class="category-bar">
+                        <div class="category-bar-fill" id="cat-energy-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="dash-card dash-card-category" id="cat-food">
+                    <div class="category-icon food-icon"><i class="fas fa-utensils"></i></div>
+                    <div class="category-info">
+                        <h4>Food</h4>
+                        <span class="category-value" id="cat-food-val">— tons</span>
+                    </div>
+                    <div class="category-bar">
+                        <div class="category-bar-fill" id="cat-food-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="dash-card dash-card-category" id="cat-lifestyle">
+                    <div class="category-icon lifestyle-icon"><i class="fas fa-shopping-bag"></i></div>
+                    <div class="category-info">
+                        <h4>Lifestyle</h4>
+                        <span class="category-value" id="cat-lifestyle-val">— tons</span>
+                    </div>
+                    <div class="category-bar">
+                        <div class="category-bar-fill" id="cat-lifestyle-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Bar Chart Card -->
+                <div class="dash-card dash-card-bar-chart">
+                    <div class="dash-card-header">
+                        <h3>You vs. World Averages</h3>
+                        <div class="dash-card-icon"><i class="fas fa-balance-scale"></i></div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="comparison-bar-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tips Section -->
+    <section id="tips" class="section tips-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="fas fa-lightbulb"></i> Insights</span>
+                <h2 class="section-title">Personalized Reduction Tips</h2>
+                <p class="section-subtitle">Small changes can make a big difference. Here are actions tailored to your lifestyle.</p>
+            </div>
+
+            <div class="tips-filter" id="tips-filter">
+                <button class="filter-btn active" data-filter="all">All Tips</button>
+                <button class="filter-btn" data-filter="transport"><i class="fas fa-car"></i> Transport</button>
+                <button class="filter-btn" data-filter="energy"><i class="fas fa-bolt"></i> Energy</button>
+                <button class="filter-btn" data-filter="food"><i class="fas fa-utensils"></i> Food</button>
+                <button class="filter-btn" data-filter="lifestyle"><i class="fas fa-shopping-bag"></i> Lifestyle</button>
+            </div>
+
+            <div class="tips-grid" id="tips-grid">
+                <!-- Transport Tips -->
+                <div class="tip-card" data-category="transport">
+                    <div class="tip-impact high">High Impact</div>
+                    <div class="tip-icon"><i class="fas fa-bicycle"></i></div>
+                    <h3>Cycle or Walk Short Trips</h3>
+                    <p>Replace car trips under 5 km with cycling or walking. This alone can save up to 0.5 tons CO₂ per year.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.5 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="transport">
+                    <div class="tip-impact high">High Impact</div>
+                    <div class="tip-icon"><i class="fas fa-train"></i></div>
+                    <h3>Use Public Transit</h3>
+                    <p>Switching from driving to public transit for your daily commute can reduce emissions by up to 65%.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~2.4 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="transport">
+                    <div class="tip-impact medium">Medium Impact</div>
+                    <div class="tip-icon"><i class="fas fa-users"></i></div>
+                    <h3>Carpool to Work</h3>
+                    <p>Sharing rides with colleagues cuts your commute emissions in half and saves money too.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~1.0 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="transport">
+                    <div class="tip-impact high">High Impact</div>
+                    <div class="tip-icon"><i class="fas fa-plane-slash"></i></div>
+                    <h3>Reduce Air Travel</h3>
+                    <p>One transatlantic flight emits ~1.6 tons CO₂. Consider virtual meetings or train alternatives.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~1.6 tons CO₂/flight</div>
+                </div>
+
+                <!-- Energy Tips -->
+                <div class="tip-card" data-category="energy">
+                    <div class="tip-impact high">High Impact</div>
+                    <div class="tip-icon"><i class="fas fa-solar-panel"></i></div>
+                    <h3>Switch to Renewables</h3>
+                    <p>Choose a green energy provider or install solar panels. This can eliminate up to 80% of home energy emissions.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~1.5 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="energy">
+                    <div class="tip-impact medium">Medium Impact</div>
+                    <div class="tip-icon"><i class="fas fa-lightbulb"></i></div>
+                    <h3>LED Lighting</h3>
+                    <p>Replace all bulbs with LEDs. They use 75% less energy and last 25 times longer than incandescent bulbs.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.4 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="energy">
+                    <div class="tip-impact medium">Medium Impact</div>
+                    <div class="tip-icon"><i class="fas fa-thermometer-half"></i></div>
+                    <h3>Smart Thermostat</h3>
+                    <p>Lower heating by 1°C and use a programmable thermostat. Save energy while keeping comfortable.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.3 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="energy">
+                    <div class="tip-impact low">Low Impact</div>
+                    <div class="tip-icon"><i class="fas fa-power-off"></i></div>
+                    <h3>Unplug Standby Devices</h3>
+                    <p>Phantom power accounts for 5-10% of home energy use. Unplug chargers and devices when not in use.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.1 tons CO₂/year</div>
+                </div>
+
+                <!-- Food Tips -->
+                <div class="tip-card" data-category="food">
+                    <div class="tip-impact high">High Impact</div>
+                    <div class="tip-icon"><i class="fas fa-seedling"></i></div>
+                    <h3>Eat More Plant-Based</h3>
+                    <p>Reducing meat consumption by half can save nearly 1 ton of CO₂ per year. Try Meatless Mondays!</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.8 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="food">
+                    <div class="tip-impact medium">Medium Impact</div>
+                    <div class="tip-icon"><i class="fas fa-apple-alt"></i></div>
+                    <h3>Buy Local & Seasonal</h3>
+                    <p>Locally sourced food travels less and has a lower carbon footprint. Visit farmers' markets!</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.3 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="food">
+                    <div class="tip-impact medium">Medium Impact</div>
+                    <div class="tip-icon"><i class="fas fa-trash-restore"></i></div>
+                    <h3>Reduce Food Waste</h3>
+                    <p>Plan meals, store food properly, and compost scraps. Food waste in landfills produces methane.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.5 tons CO₂/year</div>
+                </div>
+
+                <!-- Lifestyle Tips -->
+                <div class="tip-card" data-category="lifestyle">
+                    <div class="tip-impact medium">Medium Impact</div>
+                    <div class="tip-icon"><i class="fas fa-tshirt"></i></div>
+                    <h3>Buy Less, Choose Well</h3>
+                    <p>Fast fashion is a major polluter. Buy fewer, higher-quality clothes and support sustainable brands.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.4 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="lifestyle">
+                    <div class="tip-impact low">Low Impact</div>
+                    <div class="tip-icon"><i class="fas fa-recycle"></i></div>
+                    <h3>Recycle Everything</h3>
+                    <p>Proper recycling can divert 75% of waste from landfills. Learn your local recycling rules.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Save ~0.2 tons CO₂/year</div>
+                </div>
+                <div class="tip-card" data-category="lifestyle">
+                    <div class="tip-impact low">Low Impact</div>
+                    <div class="tip-icon"><i class="fas fa-tree"></i></div>
+                    <h3>Plant Trees</h3>
+                    <p>A single tree absorbs about 22 kg of CO₂ per year. Start a garden or support reforestation projects.</p>
+                    <div class="tip-savings"><i class="fas fa-leaf"></i> Offset ~0.02 tons CO₂/tree/year</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Impact Tracker Section -->
+    <section id="tracker" class="section tracker-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="fas fa-chart-line"></i> Tracker</span>
+                <h2 class="section-title">Track Your Impact</h2>
+                <p class="section-subtitle">Log your eco-friendly actions and watch your positive impact grow over time.</p>
+            </div>
+
+            <div class="tracker-grid">
+                <!-- Action Logger -->
+                <div class="tracker-card tracker-logger">
+                    <h3><i class="fas fa-plus-circle"></i> Log an Action</h3>
+                    <div class="form-group">
+                        <label for="action-select">What did you do?</label>
+                        <div class="select-wrapper">
+                            <i class="fas fa-check-circle"></i>
+                            <select id="action-select">
+                                <option value="" disabled selected>Choose an action...</option>
+                                <option value="bike">🚲 Cycled instead of driving</option>
+                                <option value="transit">🚌 Used public transit</option>
+                                <option value="meatless">🥗 Had a meatless meal</option>
+                                <option value="reuse">♻️ Recycled or reused items</option>
+                                <option value="unplug">🔌 Unplugged devices</option>
+                                <option value="local">🏪 Bought local produce</option>
+                                <option value="walk">🚶 Walked instead of driving</option>
+                                <option value="cold-wash">🧺 Cold water laundry</option>
+                                <option value="no-waste">🍽️ Zero food waste today</option>
+                                <option value="tree">🌳 Planted a tree</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" id="log-action-btn">
+                        <i class="fas fa-plus"></i> Log This Action
+                    </button>
+
+                    <div class="logged-summary">
+                        <div class="summary-item">
+                            <span class="summary-number" id="total-actions">0</span>
+                            <span class="summary-label">Actions Logged</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-number" id="total-saved-co2">0</span>
+                            <span class="summary-label">kg CO₂ Saved</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-number" id="current-streak">0</span>
+                            <span class="summary-label">Day Streak 🔥</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action History -->
+                <div class="tracker-card tracker-history">
+                    <h3><i class="fas fa-history"></i> Recent Actions</h3>
+                    <div class="history-list" id="history-list">
+                        <div class="history-empty">
+                            <i class="fas fa-inbox"></i>
+                            <p>No actions logged yet. Start making a difference today!</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-full" id="clear-history-btn">
+                        <i class="fas fa-trash-alt"></i> Clear History
+                    </button>
+                </div>
+
+                <!-- Weekly Chart -->
+                <div class="tracker-card tracker-chart-card">
+                    <h3><i class="fas fa-chart-area"></i> Weekly Progress</h3>
+                    <div class="chart-container">
+                        <canvas id="weekly-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Achievements -->
+                <div class="tracker-card tracker-achievements">
+                    <h3><i class="fas fa-trophy"></i> Achievements</h3>
+                    <div class="achievements-grid" id="achievements-grid">
+                        <div class="achievement locked" data-id="first-step" data-req="1">
+                            <div class="achievement-icon"><i class="fas fa-shoe-prints"></i></div>
+                            <span>First Step</span>
+                            <small>Log 1 action</small>
+                        </div>
+                        <div class="achievement locked" data-id="week-warrior" data-req="7">
+                            <div class="achievement-icon"><i class="fas fa-calendar-week"></i></div>
+                            <span>Week Warrior</span>
+                            <small>Log 7 actions</small>
+                        </div>
+                        <div class="achievement locked" data-id="eco-hero" data-req="25">
+                            <div class="achievement-icon"><i class="fas fa-mask"></i></div>
+                            <span>Eco Hero</span>
+                            <small>Log 25 actions</small>
+                        </div>
+                        <div class="achievement locked" data-id="planet-saver" data-req="50">
+                            <div class="achievement-icon"><i class="fas fa-globe-americas"></i></div>
+                            <span>Planet Saver</span>
+                            <small>Log 50 actions</small>
+                        </div>
+                        <div class="achievement locked" data-id="carbon-master" data-req="100">
+                            <div class="achievement-icon"><i class="fas fa-crown"></i></div>
+                            <span>Carbon Master</span>
+                            <small>Log 100 actions</small>
+                        </div>
+                        <div class="achievement locked" data-id="streak-5" data-req="5" data-type="streak">
+                            <div class="achievement-icon"><i class="fas fa-fire"></i></div>
+                            <span>On Fire!</span>
+                            <small>5-day streak</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pledge Section -->
+    <section id="pledge" class="section pledge-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="fas fa-hand-holding-heart"></i> Pledge</span>
+                <h2 class="section-title">Take the Green Pledge</h2>
+                <p class="section-subtitle">Commit to sustainable actions and join a community making a real difference.</p>
+            </div>
+
+            <div class="pledge-grid">
+                <div class="pledge-card" data-pledge="transport">
+                    <div class="pledge-icon"><i class="fas fa-car-side"></i></div>
+                    <h3>Drive Less</h3>
+                    <p>I pledge to use public transit, cycle, or walk at least 3 days per week.</p>
+                    <div class="pledge-impact">Potential Impact: <strong>-1.2 tons CO₂/year</strong></div>
+                    <button class="btn btn-pledge" id="pledge-transport">Take Pledge</button>
+                </div>
+                <div class="pledge-card" data-pledge="energy">
+                    <div class="pledge-icon"><i class="fas fa-bolt"></i></div>
+                    <h3>Save Energy</h3>
+                    <p>I pledge to reduce my energy consumption by 20% through smart habits.</p>
+                    <div class="pledge-impact">Potential Impact: <strong>-0.8 tons CO₂/year</strong></div>
+                    <button class="btn btn-pledge" id="pledge-energy">Take Pledge</button>
+                </div>
+                <div class="pledge-card" data-pledge="food">
+                    <div class="pledge-icon"><i class="fas fa-seedling"></i></div>
+                    <h3>Eat Green</h3>
+                    <p>I pledge to have at least 3 fully plant-based days every week.</p>
+                    <div class="pledge-impact">Potential Impact: <strong>-0.6 tons CO₂/year</strong></div>
+                    <button class="btn btn-pledge" id="pledge-food">Take Pledge</button>
+                </div>
+                <div class="pledge-card" data-pledge="waste">
+                    <div class="pledge-icon"><i class="fas fa-recycle"></i></div>
+                    <h3>Zero Waste</h3>
+                    <p>I pledge to minimize waste, recycle diligently, and avoid single-use plastics.</p>
+                    <div class="pledge-impact">Potential Impact: <strong>-0.4 tons CO₂/year</strong></div>
+                    <button class="btn btn-pledge" id="pledge-waste">Take Pledge</button>
+                </div>
+            </div>
+
+            <div class="pledge-counter">
+                <div class="pledge-counter-inner">
+                    <div class="pledge-stat">
+                        <i class="fas fa-users"></i>
+                        <span class="pledge-stat-number" id="pledges-taken">0</span>
+                        <span class="pledge-stat-label">Pledges Taken</span>
+                    </div>
+                    <div class="pledge-stat">
+                        <i class="fas fa-leaf"></i>
+                        <span class="pledge-stat-number" id="potential-savings">0</span>
+                        <span class="pledge-stat-label">tons CO₂ You Can Save</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer" class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#hero" class="nav-logo">
+                        <i class="fas fa-leaf"></i>
+                        <span>EcoTrack</span>
+                    </a>
+                    <p>Empowering individuals to understand, track, and reduce their carbon footprint through simple actions and personalized insights.</p>
+                    <div class="footer-socials">
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links-group">
+                    <h4>Platform</h4>
+                    <ul>
+                        <li><a href="#calculator">Calculator</a></li>
+                        <li><a href="#dashboard">Dashboard</a></li>
+                        <li><a href="#tips">Tips</a></li>
+                        <li><a href="#tracker">Tracker</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links-group">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Carbon Facts</a></li>
+                        <li><a href="#">Climate Science</a></li>
+                        <li><a href="#">Sustainability Guide</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links-group">
+                    <h4>About</h4>
+                    <ul>
+                        <li><a href="#">Our Mission</a></li>
+                        <li><a href="#">Team</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 EcoTrack. Built with 💚 for the planet. All data stays in your browser.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
