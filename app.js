@@ -7,6 +7,44 @@
     'use strict';
 
     // ========================
+    // SECURITY HELPERS
+    // ========================
+
+    /**
+     * Escapes HTML special characters to prevent XSS.
+     * @param {string} str - Raw string input
+     * @returns {string} - HTML-safe string
+     */
+    function sanitizeString(str) {
+        if (typeof str !== 'string') return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
+        return str.replace(/[&<>"'/]/g, m => map[m]);
+    }
+
+    /**
+     * Validates a numeric form input value.
+     * @param {*} value
+     * @param {number} min
+     * @param {number} max
+     * @returns {boolean}
+     */
+    function validateNumericInput(value, min = 0, max = 99999) {
+        const n = parseFloat(value);
+        return !isNaN(n) && isFinite(n) && n >= min && n <= max;
+    }
+
+    /**
+     * Announces a message to screen reader users via the live region.
+     * @param {string} message
+     */
+    function announceToScreenReader(message) {
+        const region = document.getElementById('aria-live-region');
+        if (!region) return;
+        region.textContent = '';
+        setTimeout(() => { region.textContent = sanitizeString(message); }, 50);
+    }
+
+    // ========================
     // DATA & CONSTANTS
     // ========================
 
@@ -324,7 +362,7 @@
     }
 
     function calculateFootprint() {
-        // Gather inputs
+        // Gather & validate inputs
         const carKm = parseFloat(document.getElementById('car-km').value) || 0;
         const carType = document.getElementById('car-type').value;
         const publicTransport = parseFloat(document.getElementById('public-transport').value) || 0;
@@ -333,7 +371,7 @@
         const electricity = parseFloat(document.getElementById('electricity').value) || 0;
         const gasBill = parseFloat(document.getElementById('gas-bill').value) || 0;
         const renewable = document.getElementById('renewable').value;
-        const householdSize = parseFloat(document.getElementById('household-size').value) || 1;
+        const householdSize = Math.max(1, parseFloat(document.getElementById('household-size').value) || 1);
 
         const dietType = document.getElementById('diet-type').value;
         const foodWaste = document.getElementById('food-waste').value;
@@ -342,7 +380,14 @@
         const clothing = parseFloat(document.getElementById('clothing').value) || 0;
         const electronics = parseFloat(document.getElementById('electronics').value) || 0;
         const recycling = document.getElementById('recycling').value;
-        const streaming = parseFloat(document.getElementById('streaming').value) || 0;
+        const streaming = Math.min(24, parseFloat(document.getElementById('streaming').value) || 0);
+
+        // Security: validate numeric ranges before computing
+        if (!validateNumericInput(carKm, 0, 99999) || !validateNumericInput(flights, 0, 365) ||
+            !validateNumericInput(electricity, 0, 99999) || !validateNumericInput(householdSize, 1, 20)) {
+            showToast('warning', 'Please check your inputs — some values are out of range.');
+            return;
+        }
 
         // Calculate transport emissions (tons CO₂/year)
         const carEmissions = carKm * 52 * (CAR_EMISSIONS[carType] || 0) / 1000;
@@ -386,6 +431,9 @@
 
         // Scroll to dashboard
         document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
+
+        // Announce to screen readers
+        announceToScreenReader(`Your carbon footprint is ${footprintData.total} tons of CO2 per year. Check your dashboard for the full breakdown.`);
 
         showToast('success', 'Footprint calculated! Check your dashboard below.');
     }
@@ -681,8 +729,12 @@
             btn.addEventListener('click', () => {
                 const filter = btn.dataset.filter;
 
-                filterBtns.forEach(b => b.classList.remove('active'));
+                filterBtns.forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
 
                 tipCards.forEach(card => {
                     if (filter === 'all' || card.dataset.category === filter) {
@@ -737,6 +789,13 @@
 
         // Update UI
         updateTrackerUI();
+
+        // Security: sanitize all dynamic text inserted into the DOM
+        const safeLabel = sanitizeString(action.label);
+        
+        // Announce logged action
+        announceToScreenReader(`Action logged: ${safeLabel}. You saved ${action.co2} kg of CO2.`);
+        
         showToast('success', `${action.icon} ${action.label} — Saved ${action.co2} kg CO₂!`);
     }
 
@@ -773,17 +832,19 @@
                 </div>`;
         } else {
             historyList.innerHTML = actions.slice(0, 20).map(a => {
-                const date = new Date(a.date);
-                const timeStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-                    ' at ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const d = new Date(a.date);
+                const ts = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+                    ' at ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const lbl = sanitizeString(a.label);
+                const ico = sanitizeString(a.icon);
                 return `
-                    <div class="history-item">
-                        <span class="history-icon">${a.icon}</span>
+                    <div class="history-item" role="listitem">
+                        <span class="history-icon" aria-hidden="true">${ico}</span>
                         <div class="history-info">
-                            <strong>${a.label}</strong>
-                            <small>${timeStr}</small>
+                            <strong>${lbl}</strong>
+                            <small>${ts}</small>
                         </div>
-                        <span class="history-saved">-${a.co2} kg</span>
+                        <span class="history-saved" aria-label="CO2 saved: ${a.co2} kilograms">-${a.co2} kg</span>
                     </div>`;
             }).join('');
         }
@@ -909,8 +970,10 @@
 
                 btn.textContent = '✓ Pledged!';
                 btn.classList.add('pledged');
+                btn.setAttribute('aria-label', `${btn.getAttribute('aria-label') || 'Pledge'} — Already pledged`);
 
                 updatePledgeStats();
+                announceToScreenReader('Pledge taken! Thank you for committing to a greener planet.');
                 showToast('success', '🎉 Pledge taken! You\'re making a commitment for the planet.');
             });
         });

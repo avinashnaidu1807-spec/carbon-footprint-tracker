@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrack — Test Suite</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #020228; color: #CAF0F8; padding: 32px 24px; min-height: 100vh; }
+        h1 { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+        h1 span { color: #00B4D8; }
+        .subtitle { color: rgba(202,240,248,0.5); margin-bottom: 32px; font-size: 0.9rem; }
+
+        /* Summary bar */
+        .summary { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 32px; }
+        .summary-card { background: rgba(3,4,94,0.5); border: 1px solid rgba(0,180,216,0.2); border-radius: 12px; padding: 20px 28px; text-align: center; min-width: 140px; }
+        .summary-card .num { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+        .summary-card .lbl { font-size: 0.8rem; color: rgba(202,240,248,0.5); margin-top: 4px; }
+        .pass-num  { color: #22c55e; }
+        .fail-num  { color: #ef4444; }
+        .total-num { color: #00B4D8; }
+
+        /* Progress bar */
+        .progress-wrap { margin-bottom: 32px; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: rgba(202,240,248,0.6); margin-bottom: 8px; }
+        .progress-bar { height: 10px; background: rgba(0,180,216,0.1); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; background: linear-gradient(90deg, #0077B6, #00B4D8); }
+
+        /* Suite cards */
+        .suite { background: rgba(3,4,94,0.3); border: 1px solid rgba(0,180,216,0.12); border-radius: 14px; margin-bottom: 20px; overflow: hidden; }
+        .suite-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; user-select: none; }
+        .suite-header:hover { background: rgba(0,119,182,0.1); }
+        .suite-name { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 10px; }
+        .suite-badge { font-size: 0.75rem; padding: 3px 12px; border-radius: 50px; font-weight: 600; }
+        .badge-pass { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-fail { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+        .suite-toggle { font-size: 0.8rem; color: rgba(202,240,248,0.4); }
+        .suite-body { border-top: 1px solid rgba(0,180,216,0.08); padding: 8px 0; display: none; }
+        .suite-body.open { display: block; }
+
+        /* Test rows */
+        .test-row { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-bottom: 1px solid rgba(0,180,216,0.04); }
+        .test-row:last-child { border-bottom: none; }
+        .test-icon { font-size: 0.9rem; flex-shrink: 0; }
+        .test-name { flex: 1; font-size: 0.875rem; color: rgba(202,240,248,0.8); }
+        .test-status { font-size: 0.75rem; font-weight: 600; padding: 2px 10px; border-radius: 50px; }
+        .status-pass { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .status-fail { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .test-error { font-size: 0.75rem; color: #ef4444; margin-left: 44px; padding: 4px 0 6px; opacity: 0.8; font-family: monospace; }
+
+        /* Buttons */
+        .controls { margin-bottom: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn { padding: 10px 22px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-run { background: linear-gradient(135deg, #0077B6, #00B4D8); color: #fff; }
+        .btn-run:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,180,216,0.3); }
+        .btn-toggle { background: rgba(3,4,94,0.5); color: #90E0EF; border: 1px solid rgba(0,180,216,0.2); }
+        .btn-toggle:hover { background: rgba(0,119,182,0.15); }
+
+        /* Loading */
+        .running { color: #00B4D8; font-size: 0.85rem; display: none; align-items: center; gap: 8px; }
+        .running.active { display: flex; }
+        .spinner { width: 14px; height: 14px; border: 2px solid rgba(0,180,216,0.3); border-top-color: #00B4D8; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .timestamp { font-size: 0.75rem; color: rgba(202,240,248,0.3); margin-top: 24px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>🧪 EcoTrack <span>Test Suite</span></h1>
+    <p class="subtitle">Automated tests for calculator logic, security, accessibility, tracker, and data integrity.</p>
+
+    <div class="controls">
+        <button class="btn btn-run" onclick="runAll()" id="run-btn">▶ Run All Tests</button>
+        <button class="btn btn-toggle" onclick="toggleAll(true)">Expand All</button>
+        <button class="btn btn-toggle" onclick="toggleAll(false)">Collapse All</button>
+        <span class="running" id="running-indicator">
+            <span class="spinner"></span> Running tests...
+        </span>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap" style="display:none">
+        <div class="progress-label">
+            <span id="progress-text">0 / 0 passed</span>
+            <span id="score-pct">0%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+    </div>
+
+    <div class="summary" id="summary" style="display:none">
+        <div class="summary-card"><div class="num total-num" id="s-total">0</div><div class="lbl">Total Tests</div></div>
+        <div class="summary-card"><div class="num pass-num"  id="s-pass">0</div><div class="lbl">Passed ✓</div></div>
+        <div class="summary-card"><div class="num fail-num"  id="s-fail">0</div><div class="lbl">Failed ✗</div></div>
+    </div>
+
+    <div id="results-container"></div>
+    <p class="timestamp" id="timestamp"></p>
+
+    <!-- Load the full app test file -->
+    <script src="tests.js"></script>
+    <script>
+        function runAll() {
+            const btn = document.getElementById('run-btn');
+            const indicator = document.getElementById('running-indicator');
+            btn.disabled = true;
+            btn.textContent = '⏳ Running...';
+            indicator.classList.add('active');
+
+            setTimeout(() => {
+                const { results } = EcoTests;
+                renderResults(results);
+                btn.disabled = false;
+                btn.textContent = '▶ Run All Tests';
+                indicator.classList.remove('active');
+                document.getElementById('timestamp').textContent =
+                    'Last run: ' + new Date().toLocaleString();
+            }, 50);
+        }
+
+        function renderResults(results) {
+            const container = document.getElementById('results-container');
+            container.innerHTML = '';
+
+            // Summary
+            document.getElementById('summary').style.display = 'flex';
+            document.getElementById('s-total').textContent = results.total;
+            document.getElementById('s-pass').textContent  = results.passed;
+            document.getElementById('s-fail').textContent  = results.failed;
+
+            // Progress bar
+            const pct = results.total ? Math.round(results.passed / results.total * 100) : 0;
+            document.getElementById('progress-wrap').style.display = 'block';
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('progress-text').textContent =
+                results.passed + ' / ' + results.total + ' passed';
+            document.getElementById('score-pct').textContent = pct + '%';
+
+            // Suite cards
+            results.suites.forEach((suite, i) => {
+                const suitePassed = suite.tests.filter(t => t.status === 'PASS').length;
+                const allPass = suitePassed === suite.tests.length;
+
+                const card = document.createElement('div');
+                card.className = 'suite';
+                card.innerHTML = `
+                    <div class="suite-header" onclick="toggleSuite(${i})">
+                        <div class="suite-name">
+                            <span class="suite-badge ${allPass ? 'badge-pass' : 'badge-fail'}">
+                                ${suitePassed}/${suite.tests.length}
+                            </span>
+                            ${suite.name}
+                        </div>
+                        <span class="suite-toggle" id="toggle-${i}">▼</span>
+                    </div>
+                    <div class="suite-body open" id="suite-body-${i}">
+                        ${suite.tests.map(t => `
+                            <div class="test-row">
+                                <span class="test-icon">${t.status === 'PASS' ? '✅' : '❌'}</span>
+                                <span class="test-name">${escHtml(t.name)}</span>
+                                <span class="test-status ${t.status === 'PASS' ? 'status-pass' : 'status-fail'}">
+                                    ${t.status}
+                                </span>
+                            </div>
+                            ${t.error ? `<div class="test-error">↳ ${escHtml(t.error)}</div>` : ''}
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleSuite(i) {
+            const body   = document.getElementById('suite-body-' + i);
+            const toggle = document.getElementById('toggle-' + i);
+            const isOpen = body.classList.contains('open');
+            body.classList.toggle('open', !isOpen);
+            toggle.textContent = isOpen ? '▶' : '▼';
+        }
+
+        function toggleAll(expand) {
+            document.querySelectorAll('.suite-body').forEach((b, i) => {
+                b.classList.toggle('open', expand);
+                const t = document.getElementById('toggle-' + i);
+                if (t) t.textContent = expand ? '▼' : '▶';
+            });
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Auto-run on page load
+        window.addEventListener('load', runAll);
+    </script>
+</body>
+</html>

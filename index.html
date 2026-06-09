@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <meta name="description" content="Track, understand, and reduce your carbon footprint with personalized insights and actionable tips. Join the movement for a greener planet.">
     <meta name="keywords" content="carbon footprint, sustainability, climate change, eco-friendly, carbon tracker, green living">
     <meta name="author" content="EcoTrack">
@@ -15,38 +19,49 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Skip Navigation Link (Accessibility) -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Particle Canvas Background -->
-    <canvas id="particle-canvas"></canvas>
+    <canvas id="particle-canvas" aria-hidden="true" role="presentation"></canvas>
+
+    <!-- Screen reader live region for dynamic announcements -->
+    <div id="aria-live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
     <!-- Navigation -->
-    <nav id="main-nav" class="navbar">
+    <nav id="main-nav" class="navbar" aria-label="Main navigation">
         <div class="nav-container">
-            <a href="#hero" class="nav-logo">
-                <i class="fas fa-leaf"></i>
+            <a href="#hero" class="nav-logo" aria-label="EcoTrack home">
+                <i class="fas fa-leaf" aria-hidden="true"></i>
                 <span>EcoTrack</span>
             </a>
-            <ul class="nav-links" id="nav-links">
-                <li><a href="#hero" class="nav-link active">Home</a></li>
+            <ul class="nav-links" id="nav-links" role="list">
+                <li><a href="#hero" class="nav-link active" aria-current="page">Home</a></li>
                 <li><a href="#calculator" class="nav-link">Calculator</a></li>
                 <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
                 <li><a href="#tips" class="nav-link">Tips</a></li>
                 <li><a href="#tracker" class="nav-link">Tracker</a></li>
                 <li><a href="#pledge" class="nav-link">Pledge</a></li>
             </ul>
-            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-                <span></span><span></span><span></span>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
             </button>
         </div>
     </nav>
 
+    <!-- Main Content -->
+    <main id="main-content">
+
     <!-- Hero Section -->
-    <section id="hero" class="hero-section">
+    <section id="hero" class="hero-section" aria-labelledby="hero-heading">
         <div class="hero-content">
-            <div class="hero-badge">
-                <i class="fas fa-globe-americas"></i>
+            <div class="hero-badge" aria-label="Community badge">
+                <i class="fas fa-globe-americas" aria-hidden="true"></i>
                 <span>Join 50,000+ Eco Warriors</span>
             </div>
-            <h1 class="hero-title">
+            <h1 class="hero-title" id="hero-heading">
                 Understand Your <span class="gradient-text">Carbon Footprint</span>
                 <br>& Take Action Today
             </h1>
@@ -54,32 +69,32 @@
                 Track your daily carbon emissions, get personalized insights, and discover simple actions 
                 to reduce your environmental impact. Every small step counts towards a greener planet.
             </p>
-            <div class="hero-actions">
+            <div class="hero-actions" role="group" aria-label="Primary actions">
                 <a href="#calculator" class="btn btn-primary" id="hero-cta-calculate">
-                    <i class="fas fa-calculator"></i>
+                    <i class="fas fa-calculator" aria-hidden="true"></i>
                     Calculate My Footprint
                 </a>
                 <a href="#tips" class="btn btn-secondary" id="hero-cta-learn">
-                    <i class="fas fa-lightbulb"></i>
+                    <i class="fas fa-lightbulb" aria-hidden="true"></i>
                     Learn to Reduce
                 </a>
             </div>
-            <div class="hero-stats">
+            <div class="hero-stats" role="region" aria-label="Global carbon footprint statistics">
                 <div class="hero-stat">
-                    <span class="hero-stat-number" data-target="4.7">0</span>
-                    <span class="hero-stat-unit">tons CO₂</span>
+                    <span class="hero-stat-number" data-target="4.7" aria-label="4.7 tons CO2">0</span>
+                    <span class="hero-stat-unit" aria-hidden="true">tons CO₂</span>
                     <span class="hero-stat-label">World Avg / Person / Year</span>
                 </div>
-                <div class="hero-stat-divider"></div>
+                <div class="hero-stat-divider" aria-hidden="true"></div>
                 <div class="hero-stat">
-                    <span class="hero-stat-number" data-target="16">0</span>
-                    <span class="hero-stat-unit">tons CO₂</span>
+                    <span class="hero-stat-number" data-target="16" aria-label="16 tons CO2">0</span>
+                    <span class="hero-stat-unit" aria-hidden="true">tons CO₂</span>
                     <span class="hero-stat-label">US Avg / Person / Year</span>
                 </div>
-                <div class="hero-stat-divider"></div>
+                <div class="hero-stat-divider" aria-hidden="true"></div>
                 <div class="hero-stat">
-                    <span class="hero-stat-number" data-target="2">0</span>
-                    <span class="hero-stat-unit">tons CO₂</span>
+                    <span class="hero-stat-number" data-target="2" aria-label="2 tons CO2">0</span>
+                    <span class="hero-stat-unit" aria-hidden="true">tons CO₂</span>
                     <span class="hero-stat-label">Target by 2050</span>
                 </div>
             </div>
@@ -109,18 +124,18 @@
     </section>
 
     <!-- Carbon Calculator Section -->
-    <section id="calculator" class="section calculator-section">
+    <section id="calculator" class="section calculator-section" aria-labelledby="calculator-heading">
         <div class="container">
             <div class="section-header">
                 <span class="section-badge"><i class="fas fa-calculator"></i> Calculator</span>
-                <h2 class="section-title">Calculate Your Carbon Footprint</h2>
+                <h2 class="section-title" id="calculator-heading">Calculate Your Carbon Footprint</h2>
                 <p class="section-subtitle">Answer a few simple questions about your lifestyle to estimate your annual carbon emissions.</p>
             </div>
 
             <div class="calculator-wrapper">
                 <!-- Progress Bar -->
-                <div class="calc-progress">
-                    <div class="calc-progress-bar" id="calc-progress-bar" style="width: 25%"></div>
+                <div class="calc-progress" role="group" aria-label="Calculator progress">
+                    <div class="calc-progress-bar" id="calc-progress-bar" style="width: 25%" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" aria-label="Step 1 of 4"></div>
                     <div class="calc-progress-steps">
                         <div class="calc-step active" data-step="1">
                             <div class="step-icon"><i class="fas fa-car"></i></div>
@@ -144,17 +159,18 @@
                 <!-- Calculator Forms -->
                 <div class="calc-forms">
                     <!-- Step 1: Transport -->
-                    <div class="calc-form active" id="calc-step-1">
-                        <h3 class="calc-form-title"><i class="fas fa-car"></i> Transportation</h3>
+                    <div class="calc-form active" id="calc-step-1" role="group" aria-labelledby="step-1-title">
+                        <h3 class="calc-form-title" id="step-1-title"><i class="fas fa-car" aria-hidden="true"></i> Transportation</h3>
                         <p class="calc-form-desc">How do you get around? Your daily commute and travel habits play a big role.</p>
                         
                         <div class="form-group">
                             <label for="car-km">Weekly car travel (km)</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-road"></i>
-                                <input type="number" id="car-km" min="0" value="100" placeholder="e.g., 100">
-                                <span class="input-unit">km/week</span>
+                                <input type="number" id="car-km" min="0" max="99999" value="100" placeholder="e.g., 100" aria-describedby="car-km-hint">
+                                <span class="input-unit" aria-hidden="true">km/week</span>
                             </div>
+                            <span id="car-km-hint" class="sr-only">Enter your average weekly car travel distance in kilometres</span>
                         </div>
                         <div class="form-group">
                             <label for="car-type">Vehicle type</label>
@@ -173,30 +189,32 @@
                             <label for="public-transport">Weekly public transport trips</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-bus"></i>
-                                <input type="number" id="public-transport" min="0" value="5" placeholder="e.g., 5">
-                                <span class="input-unit">trips/week</span>
+                                <input type="number" id="public-transport" min="0" max="999" value="5" placeholder="e.g., 5" aria-describedby="pt-hint">
+                                <span class="input-unit" aria-hidden="true">trips/week</span>
                             </div>
+                            <span id="pt-hint" class="sr-only">Number of public transport trips per week including bus, train, and metro</span>
                         </div>
                         <div class="form-group">
                             <label for="flights-year">Flights per year</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-plane"></i>
-                                <input type="number" id="flights-year" min="0" value="2" placeholder="e.g., 2">
-                                <span class="input-unit">flights/year</span>
+                                <input type="number" id="flights-year" min="0" max="365" value="2" placeholder="e.g., 2" aria-describedby="flights-hint">
+                                <span class="input-unit" aria-hidden="true">flights/year</span>
                             </div>
+                            <span id="flights-hint" class="sr-only">Count each one-way flight as one flight</span>
                         </div>
                     </div>
 
                     <!-- Step 2: Energy -->
-                    <div class="calc-form" id="calc-step-2">
-                        <h3 class="calc-form-title"><i class="fas fa-bolt"></i> Home Energy</h3>
+                    <div class="calc-form" id="calc-step-2" role="group" aria-labelledby="step-2-title">
+                        <h3 class="calc-form-title" id="step-2-title"><i class="fas fa-bolt" aria-hidden="true"></i> Home Energy</h3>
                         <p class="calc-form-desc">Your home energy use is a significant part of your carbon footprint.</p>
                         
                         <div class="form-group">
                             <label for="electricity">Monthly electricity bill ($)</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-plug"></i>
-                                <input type="number" id="electricity" min="0" value="80" placeholder="e.g., 80">
+                                <input type="number" id="electricity" min="0" max="99999" value="80" placeholder="e.g., 80" aria-describedby="elec-hint">
                                 <span class="input-unit">$/month</span>
                             </div>
                         </div>
@@ -204,7 +222,7 @@
                             <label for="gas-bill">Monthly gas/heating bill ($)</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-fire"></i>
-                                <input type="number" id="gas-bill" min="0" value="50" placeholder="e.g., 50">
+                                <input type="number" id="gas-bill" min="0" max="99999" value="50" placeholder="e.g., 50" aria-describedby="gas-hint">
                                 <span class="input-unit">$/month</span>
                             </div>
                         </div>
@@ -223,15 +241,15 @@
                             <label for="household-size">Household size</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-users"></i>
-                                <input type="number" id="household-size" min="1" value="2" placeholder="e.g., 2">
+                                <input type="number" id="household-size" min="1" max="20" value="2" placeholder="e.g., 2" aria-describedby="household-hint">
                                 <span class="input-unit">people</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Step 3: Food -->
-                    <div class="calc-form" id="calc-step-3">
-                        <h3 class="calc-form-title"><i class="fas fa-utensils"></i> Food & Diet</h3>
+                    <div class="calc-form" id="calc-step-3" role="group" aria-labelledby="step-3-title">
+                        <h3 class="calc-form-title" id="step-3-title"><i class="fas fa-utensils" aria-hidden="true"></i> Food &amp; Diet</h3>
                         <p class="calc-form-desc">What you eat has a surprising impact on your carbon footprint.</p>
                         
                         <div class="form-group">
@@ -275,15 +293,15 @@
                     </div>
 
                     <!-- Step 4: Lifestyle -->
-                    <div class="calc-form" id="calc-step-4">
-                        <h3 class="calc-form-title"><i class="fas fa-shopping-bag"></i> Lifestyle & Consumption</h3>
+                    <div class="calc-form" id="calc-step-4" role="group" aria-labelledby="step-4-title">
+                        <h3 class="calc-form-title" id="step-4-title"><i class="fas fa-shopping-bag" aria-hidden="true"></i> Lifestyle &amp; Consumption</h3>
                         <p class="calc-form-desc">Your shopping habits and lifestyle choices also contribute.</p>
                         
                         <div class="form-group">
                             <label for="clothing">New clothing items per month</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-tshirt"></i>
-                                <input type="number" id="clothing" min="0" value="3" placeholder="e.g., 3">
+                                <input type="number" id="clothing" min="0" max="999" value="3" placeholder="e.g., 3" aria-describedby="clothing-hint">
                                 <span class="input-unit">items/month</span>
                             </div>
                         </div>
@@ -291,7 +309,7 @@
                             <label for="electronics">Electronics purchases per year</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-laptop"></i>
-                                <input type="number" id="electronics" min="0" value="2" placeholder="e.g., 2">
+                                <input type="number" id="electronics" min="0" max="99" value="2" placeholder="e.g., 2" aria-describedby="electronics-hint">
                                 <span class="input-unit">items/year</span>
                             </div>
                         </div>
@@ -311,7 +329,7 @@
                             <label for="streaming">Daily screen/streaming hours</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-tv"></i>
-                                <input type="number" id="streaming" min="0" value="4" placeholder="e.g., 4">
+                                <input type="number" id="streaming" min="0" max="24" value="4" placeholder="e.g., 4" aria-describedby="streaming-hint">
                                 <span class="input-unit">hrs/day</span>
                             </div>
                         </div>
@@ -319,15 +337,15 @@
                 </div>
 
                 <!-- Navigation Buttons -->
-                <div class="calc-nav">
-                    <button class="btn btn-outline" id="calc-prev" disabled>
-                        <i class="fas fa-arrow-left"></i> Previous
+                <div class="calc-nav" role="group" aria-label="Calculator navigation">
+                    <button class="btn btn-outline" id="calc-prev" disabled aria-label="Go to previous step">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i> Previous
                     </button>
-                    <button class="btn btn-primary" id="calc-next">
-                        Next <i class="fas fa-arrow-right"></i>
+                    <button class="btn btn-primary" id="calc-next" aria-label="Go to next step">
+                        Next <i class="fas fa-arrow-right" aria-hidden="true"></i>
                     </button>
-                    <button class="btn btn-primary btn-glow hidden" id="calc-submit">
-                        <i class="fas fa-chart-pie"></i> Calculate My Footprint
+                    <button class="btn btn-primary btn-glow hidden" id="calc-submit" aria-label="Submit and calculate your carbon footprint">
+                        <i class="fas fa-chart-pie" aria-hidden="true"></i> Calculate My Footprint
                     </button>
                 </div>
             </div>
@@ -335,11 +353,11 @@
     </section>
 
     <!-- Results / Dashboard Section -->
-    <section id="dashboard" class="section dashboard-section">
+    <section id="dashboard" class="section dashboard-section" aria-labelledby="dashboard-heading">
         <div class="container">
             <div class="section-header">
                 <span class="section-badge"><i class="fas fa-chart-bar"></i> Dashboard</span>
-                <h2 class="section-title">Your Carbon Dashboard</h2>
+                <h2 class="section-title" id="dashboard-heading">Your Carbon Dashboard</h2>
                 <p class="section-subtitle">Visual breakdown of your carbon footprint. Use the calculator above to generate your personalized results.</p>
             </div>
 
@@ -351,8 +369,8 @@
                         <div class="dash-card-icon"><i class="fas fa-globe"></i></div>
                     </div>
                     <div class="dash-total-display">
-                        <span class="dash-total-number" id="total-footprint">—</span>
-                        <span class="dash-total-unit">tons CO₂/year</span>
+                        <span class="dash-total-number" id="total-footprint" aria-live="polite" aria-label="Total annual carbon footprint">—</span>
+                        <span class="dash-total-unit" aria-hidden="true">tons CO₂/year</span>
                     </div>
                     <div class="dash-total-comparison" id="comparison-text">
                         Complete the calculator to see your results
@@ -381,7 +399,7 @@
                         <div class="dash-card-icon"><i class="fas fa-chart-pie"></i></div>
                     </div>
                     <div class="chart-container">
-                        <canvas id="footprint-donut-chart"></canvas>
+                        <canvas id="footprint-donut-chart" role="img" aria-label="Donut chart showing carbon footprint breakdown by category"></canvas>
                     </div>
                 </div>
 
@@ -437,7 +455,7 @@
                         <div class="dash-card-icon"><i class="fas fa-balance-scale"></i></div>
                     </div>
                     <div class="chart-container">
-                        <canvas id="comparison-bar-chart"></canvas>
+                        <canvas id="comparison-bar-chart" role="img" aria-label="Bar chart comparing your carbon footprint to world and US averages"></canvas>
                     </div>
                 </div>
             </div>
@@ -445,23 +463,23 @@
     </section>
 
     <!-- Tips Section -->
-    <section id="tips" class="section tips-section">
+    <section id="tips" class="section tips-section" aria-labelledby="tips-heading">
         <div class="container">
             <div class="section-header">
                 <span class="section-badge"><i class="fas fa-lightbulb"></i> Insights</span>
-                <h2 class="section-title">Personalized Reduction Tips</h2>
+                <h2 class="section-title" id="tips-heading">Personalized Reduction Tips</h2>
                 <p class="section-subtitle">Small changes can make a big difference. Here are actions tailored to your lifestyle.</p>
             </div>
 
-            <div class="tips-filter" id="tips-filter">
-                <button class="filter-btn active" data-filter="all">All Tips</button>
-                <button class="filter-btn" data-filter="transport"><i class="fas fa-car"></i> Transport</button>
-                <button class="filter-btn" data-filter="energy"><i class="fas fa-bolt"></i> Energy</button>
-                <button class="filter-btn" data-filter="food"><i class="fas fa-utensils"></i> Food</button>
-                <button class="filter-btn" data-filter="lifestyle"><i class="fas fa-shopping-bag"></i> Lifestyle</button>
+            <div class="tips-filter" id="tips-filter" role="group" aria-label="Filter tips by category">
+                <button class="filter-btn active" data-filter="all" aria-pressed="true">All Tips</button>
+                <button class="filter-btn" data-filter="transport" aria-pressed="false"><i class="fas fa-car" aria-hidden="true"></i> Transport</button>
+                <button class="filter-btn" data-filter="energy" aria-pressed="false"><i class="fas fa-bolt" aria-hidden="true"></i> Energy</button>
+                <button class="filter-btn" data-filter="food" aria-pressed="false"><i class="fas fa-utensils" aria-hidden="true"></i> Food</button>
+                <button class="filter-btn" data-filter="lifestyle" aria-pressed="false"><i class="fas fa-shopping-bag" aria-hidden="true"></i> Lifestyle</button>
             </div>
 
-            <div class="tips-grid" id="tips-grid">
+            <div class="tips-grid" id="tips-grid" role="list" aria-label="Carbon reduction tips">
                 <!-- Transport Tips -->
                 <div class="tip-card" data-category="transport">
                     <div class="tip-impact high">High Impact</div>
@@ -572,11 +590,11 @@
     </section>
 
     <!-- Impact Tracker Section -->
-    <section id="tracker" class="section tracker-section">
+    <section id="tracker" class="section tracker-section" aria-labelledby="tracker-heading">
         <div class="container">
             <div class="section-header">
                 <span class="section-badge"><i class="fas fa-chart-line"></i> Tracker</span>
-                <h2 class="section-title">Track Your Impact</h2>
+                <h2 class="section-title" id="tracker-heading">Track Your Impact</h2>
                 <p class="section-subtitle">Log your eco-friendly actions and watch your positive impact grow over time.</p>
             </div>
 
@@ -603,8 +621,8 @@
                             </select>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-full" id="log-action-btn">
-                        <i class="fas fa-plus"></i> Log This Action
+                    <button class="btn btn-primary btn-full" id="log-action-btn" aria-label="Log selected eco-friendly action">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Log This Action
                     </button>
 
                     <div class="logged-summary">
@@ -626,14 +644,14 @@
                 <!-- Action History -->
                 <div class="tracker-card tracker-history">
                     <h3><i class="fas fa-history"></i> Recent Actions</h3>
-                    <div class="history-list" id="history-list">
+                    <div class="history-list" id="history-list" role="log" aria-label="Action history" aria-live="polite">
                         <div class="history-empty">
-                            <i class="fas fa-inbox"></i>
+                            <i class="fas fa-inbox" aria-hidden="true"></i>
                             <p>No actions logged yet. Start making a difference today!</p>
                         </div>
                     </div>
-                    <button class="btn btn-outline btn-full" id="clear-history-btn">
-                        <i class="fas fa-trash-alt"></i> Clear History
+                    <button class="btn btn-outline btn-full" id="clear-history-btn" aria-label="Clear all logged actions">
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear History
                     </button>
                 </div>
 
@@ -641,7 +659,7 @@
                 <div class="tracker-card tracker-chart-card">
                     <h3><i class="fas fa-chart-area"></i> Weekly Progress</h3>
                     <div class="chart-container">
-                        <canvas id="weekly-chart"></canvas>
+                        <canvas id="weekly-chart" role="img" aria-label="Line chart showing CO2 saved per day over the past 7 days"></canvas>
                     </div>
                 </div>
 
@@ -686,11 +704,11 @@
     </section>
 
     <!-- Pledge Section -->
-    <section id="pledge" class="section pledge-section">
+    <section id="pledge" class="section pledge-section" aria-labelledby="pledge-heading">
         <div class="container">
             <div class="section-header">
                 <span class="section-badge"><i class="fas fa-hand-holding-heart"></i> Pledge</span>
-                <h2 class="section-title">Take the Green Pledge</h2>
+                <h2 class="section-title" id="pledge-heading">Take the Green Pledge</h2>
                 <p class="section-subtitle">Commit to sustainable actions and join a community making a real difference.</p>
             </div>
 
@@ -700,28 +718,28 @@
                     <h3>Drive Less</h3>
                     <p>I pledge to use public transit, cycle, or walk at least 3 days per week.</p>
                     <div class="pledge-impact">Potential Impact: <strong>-1.2 tons CO₂/year</strong></div>
-                    <button class="btn btn-pledge" id="pledge-transport">Take Pledge</button>
+                    <button class="btn btn-pledge" id="pledge-transport" aria-label="Take the Drive Less pledge to reduce transport emissions">Take Pledge</button>
                 </div>
                 <div class="pledge-card" data-pledge="energy">
                     <div class="pledge-icon"><i class="fas fa-bolt"></i></div>
                     <h3>Save Energy</h3>
                     <p>I pledge to reduce my energy consumption by 20% through smart habits.</p>
                     <div class="pledge-impact">Potential Impact: <strong>-0.8 tons CO₂/year</strong></div>
-                    <button class="btn btn-pledge" id="pledge-energy">Take Pledge</button>
+                    <button class="btn btn-pledge" id="pledge-energy" aria-label="Take the Save Energy pledge to reduce home energy use">Take Pledge</button>
                 </div>
                 <div class="pledge-card" data-pledge="food">
                     <div class="pledge-icon"><i class="fas fa-seedling"></i></div>
                     <h3>Eat Green</h3>
                     <p>I pledge to have at least 3 fully plant-based days every week.</p>
                     <div class="pledge-impact">Potential Impact: <strong>-0.6 tons CO₂/year</strong></div>
-                    <button class="btn btn-pledge" id="pledge-food">Take Pledge</button>
+                    <button class="btn btn-pledge" id="pledge-food" aria-label="Take the Eat Green pledge for plant-based eating">Take Pledge</button>
                 </div>
                 <div class="pledge-card" data-pledge="waste">
                     <div class="pledge-icon"><i class="fas fa-recycle"></i></div>
                     <h3>Zero Waste</h3>
                     <p>I pledge to minimize waste, recycle diligently, and avoid single-use plastics.</p>
                     <div class="pledge-impact">Potential Impact: <strong>-0.4 tons CO₂/year</strong></div>
-                    <button class="btn btn-pledge" id="pledge-waste">Take Pledge</button>
+                    <button class="btn btn-pledge" id="pledge-waste" aria-label="Take the Zero Waste pledge to reduce waste">Take Pledge</button>
                 </div>
             </div>
 
@@ -792,6 +810,8 @@
             </div>
         </div>
     </footer>
+
+    </main><!-- end #main-content -->
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toast-container"></div>
