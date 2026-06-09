@@ -356,6 +356,20 @@ input, select {
     font-size: 1.4rem;
 }
 
+.nav-logo-img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 8px;
+    transition: var(--transition);
+    filter: drop-shadow(0 0 6px rgba(0, 180, 216, 0.5));
+}
+
+.nav-logo:hover .nav-logo-img {
+    filter: drop-shadow(0 0 12px rgba(0, 180, 216, 0.9));
+    transform: scale(1.1);
+}
+
 .nav-links {
     display: flex;
     gap: 8px;
