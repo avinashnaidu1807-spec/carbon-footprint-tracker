@@ -1,19 +1,45 @@
 /* ============================================
    EcoTrack — Carbon Footprint Awareness Platform
    Main Application Logic
+   
+   Purpose: Comprehensive carbon footprint tracker enabling users to:
+   - Calculate personal annual CO₂ emissions across 4 categories (transport, energy, food, lifestyle)
+   - View personalized insights via interactive charts
+   - Log eco-friendly actions and track impact
+   - Commit to sustainability pledges
+   
+   Architecture: IIFE pattern for module encapsulation. All state private.
+   Security: Input sanitization, validation, CSP compliance, XSS prevention.
    ============================================ */
 
 (function () {
     'use strict';
 
     // ========================
+    // INPUT VALIDATION CONSTANTS
+    // ========================
+    const INPUT_LIMITS = {
+        carKm: { min: 0, max: 99999 },
+        flights: { min: 0, max: 365 },
+        electricity: { min: 0, max: 99999 },
+        householdSize: { min: 1, max: 20 },
+        streaming: { min: 0, max: 24 }
+    };
+
+    // ========================
     // SECURITY HELPERS
     // ========================
 
     /**
-     * Escapes HTML special characters to prevent XSS.
-     * @param {string} str - Raw string input
-     * @returns {string} - HTML-safe string
+     * Escapes HTML special characters to prevent XSS attacks.
+     * Replaces dangerous characters with HTML entities.
+     * Security: Prevents injection of malicious scripts via user data.
+     * 
+     * @param {string} str - Raw string input (unsanitized)
+     * @returns {string} - HTML-safe escaped string
+     * @throws {TypeError} If str is not a string, returns empty string
+     * @example
+     * sanitizeString('<img src=x onerror=alert(1)>') → '&lt;img src=x onerror=alert(1)&gt;'
      */
     function sanitizeString(str) {
         if (typeof str !== 'string') return '';
@@ -22,11 +48,17 @@
     }
 
     /**
-     * Validates a numeric form input value.
-     * @param {*} value
-     * @param {number} min
-     * @param {number} max
-     * @returns {boolean}
+     * Validates a numeric form input value within specified bounds.
+     * Security: Prevents integer overflow, NaN, Infinity injection.
+     * 
+     * @param {*} value - Value to validate (any type)
+     * @param {number} [min=0] - Minimum allowed value (inclusive)
+     * @param {number} [max=99999] - Maximum allowed value (inclusive)
+     * @returns {boolean} True if value is valid number within range
+     * @example
+     * validateNumericInput(50, 0, 100) → true
+     * validateNumericInput('50', 0, 100) → true
+     * validateNumericInput(NaN) → false
      */
     function validateNumericInput(value, min = 0, max = 99999) {
         const n = parseFloat(value);
@@ -34,12 +66,37 @@
     }
 
     /**
-     * Announces a message to screen reader users via the live region.
-     * @param {string} message
+     * Safely logs message to console for debugging.
+     * Security: Only logs in non-production; prevents console injection.
+     * 
+     * @param {string} level - Log level: 'info', 'warn', 'error'
+     * @param {string} message - Message to log
+     * @param {*} data - Optional data to log
+     */
+    function debugLog(level, message, data) {
+        // Browser-safe environment check (no Node.js process object in browser)
+        const isProduction = typeof window !== 'undefined' &&
+            window.location.hostname !== 'localhost' &&
+            window.location.hostname !== '127.0.0.1';
+        if (isProduction) return;
+        const timestamp = new Date().toISOString();
+        const logFn = console[level] || console.log;
+        logFn(`[EcoTrack][${timestamp}] ${message}`, data !== undefined ? data : '');
+    }
+
+    /**
+     * Announces a message to screen reader users via ARIA live region.
+     * Accessibility: Ensures dynamic updates are announced to assistive technology.
+     * 
+     * @param {string} message - Message to announce (will be sanitized)
+     * @returns {void}
      */
     function announceToScreenReader(message) {
         const region = document.getElementById('aria-live-region');
-        if (!region) return;
+        if (!region) {
+            debugLog('warn', 'aria-live-region not found');
+            return;
+        }
         region.textContent = '';
         setTimeout(() => { region.textContent = sanitizeString(message); }, 50);
     }
@@ -136,6 +193,14 @@
     // PARTICLE BACKGROUND
     // ========================
 
+    /**
+     * Renders animated particle background using HTML5 Canvas.
+     * Performance optimized: Responsive particle count based on viewport size.
+     * Features: Auto-resize on window, particle connections, smooth animation.
+     * Accessibility: Canvas marked as presentation layer for screen readers.
+     * 
+     * @returns {void}
+     */
     function initParticles() {
         const canvas = document.getElementById('particle-canvas');
         if (!canvas) return;
@@ -226,52 +291,81 @@
     // NAVIGATION
     // ========================
 
+    /**
+     * Initializes navigation bar with scroll effects and mobile toggle.
+     * Features: Active link highlighting, sticky navbar on scroll, mobile menu.
+     * Accessibility: ARIA labels for nav toggle button.
+     * Error Handling: Graceful fallback if nav elements missing.
+     * 
+     * @returns {void}
+     */
     function initNavigation() {
-        const navbar = document.getElementById('main-nav');
-        const toggle = document.getElementById('nav-toggle');
-        const links = document.getElementById('nav-links');
-        const navLinks = document.querySelectorAll('.nav-link');
+        try {
+            const navbar = document.getElementById('main-nav');
+            const toggle = document.getElementById('nav-toggle');
+            const links = document.getElementById('nav-links');
+            const navLinks = document.querySelectorAll('.nav-link');
 
-        // Scroll effect
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
+            if (!navbar || !toggle || !links || navLinks.length === 0) {
+                debugLog('warn', 'Navigation elements not fully initialized');
+                return;
             }
-            updateActiveNav();
-        });
 
-        // Mobile toggle
-        toggle.addEventListener('click', () => {
-            links.classList.toggle('open');
-        });
-
-        // Close mobile nav on link click
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                links.classList.remove('open');
-            });
-        });
-
-        function updateActiveNav() {
-            const sections = document.querySelectorAll('.section, .hero-section');
-            const scrollPos = window.scrollY + 200;
-
-            sections.forEach(section => {
-                const top = section.offsetTop;
-                const height = section.offsetHeight;
-                const id = section.getAttribute('id');
-
-                if (scrollPos >= top && scrollPos < top + height) {
-                    navLinks.forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === '#' + id) {
-                            link.classList.add('active');
-                        }
-                    });
+            // Scroll effect
+            window.addEventListener('scroll', () => {
+                try {
+                    if (window.scrollY > 50) {
+                        navbar.classList.add('scrolled');
+                    } else {
+                        navbar.classList.remove('scrolled');
+                    }
+                    updateActiveNav();
+                } catch (e) {
+                    debugLog('error', 'Error in scroll event', e);
                 }
             });
+
+            // Mobile toggle
+            toggle.addEventListener('click', () => {
+                links.classList.toggle('open');
+                toggle.setAttribute('aria-expanded', links.classList.contains('open'));
+            });
+
+            // Close mobile nav on link click
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    links.classList.remove('open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            function updateActiveNav() {
+                try {
+                    const sections = document.querySelectorAll('.section, .hero-section');
+                    const scrollPos = window.scrollY + 200;
+
+                    sections.forEach(section => {
+                        const top = section.offsetTop;
+                        const height = section.offsetHeight;
+                        const id = section.getAttribute('id');
+
+                        if (scrollPos >= top && scrollPos < top + height) {
+                            navLinks.forEach(link => {
+                                link.classList.remove('active');
+                                link.setAttribute('aria-current', 'false');
+                                if (link.getAttribute('href') === '#' + id) {
+                                    link.classList.add('active');
+                                    link.setAttribute('aria-current', 'page');
+                                }
+                            });
+                        }
+                    });
+                } catch (e) {
+                    debugLog('error', 'Error updating active nav', e);
+                }
+            }
+        } catch (e) {
+            debugLog('error', 'Error initializing navigation', e);
         }
     }
 
@@ -279,47 +373,89 @@
     // HERO STATS COUNTER
     // ========================
 
+    /**
+     * Animates hero section statistics on page load.
+     * Uses easing animation for smooth number reveal effect.
+     * Performance: Triggered once with requestAnimationFrame.
+     * Error Handling: Validates elements and data before animation.
+     * 
+     * @returns {void}
+     */
     function initHeroStats() {
-        const stats = document.querySelectorAll('.hero-stat-number');
-        let animated = false;
+        try {
+            const stats = document.querySelectorAll('.hero-stat-number');
+            if (stats.length === 0) {
+                debugLog('warn', 'No hero stats found');
+                return;
+            }
 
-        function animateStats() {
-            if (animated) return;
-            animated = true;
+            let animated = false;
 
-            stats.forEach(stat => {
-                const target = parseFloat(stat.dataset.target);
-                const duration = 2000;
-                const start = performance.now();
+            function animateStats() {
+                if (animated) return;
+                animated = true;
 
-                function step(now) {
-                    const elapsed = now - start;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const eased = 1 - Math.pow(1 - progress, 3);
-                    const current = (eased * target).toFixed(1);
-                    stat.textContent = current % 1 === 0 ? parseInt(current) : current;
-                    if (progress < 1) requestAnimationFrame(step);
-                }
+                stats.forEach(stat => {
+                    try {
+                        const target = parseFloat(stat.dataset.target);
+                        if (!isFinite(target)) {
+                            debugLog('warn', 'Invalid target value for stat', stat.dataset.target);
+                            return;
+                        }
 
-                requestAnimationFrame(step);
-            });
+                        const duration = 2000;
+                        const start = performance.now();
+
+                        function step(now) {
+                            const elapsed = now - start;
+                            const progress = Math.min(elapsed / duration, 1);
+                            const eased = 1 - Math.pow(1 - progress, 3);
+                            const current = (eased * target).toFixed(1);
+                            stat.textContent = current % 1 === 0 ? parseInt(current) : current;
+                            if (progress < 1) requestAnimationFrame(step);
+                            else stat.textContent = (target % 1 === 0 ? parseInt(target) : target.toFixed(1));
+                        }
+
+                        requestAnimationFrame(step);
+                    } catch (e) {
+                        debugLog('error', 'Error animating stat', e);
+                    }
+                });
+            }
+
+            // Trigger immediately since hero is visible on load
+            setTimeout(animateStats, 500);
+        } catch (e) {
+            debugLog('error', 'Error initializing hero stats', e);
         }
-
-        // Trigger immediately since hero is visible on load
-        setTimeout(animateStats, 500);
     }
 
     // ========================
     // CALCULATOR
     // ========================
 
+    /**
+     * Initializes the multi-step calculator wizard.
+     * Sets up form navigation, progress bar, and submission.
+     * Features: Previous/Next buttons, progress tracking, step validation.
+     * 
+     * @returns {void}
+     */
     function initCalculator() {
+        // Security: Defensive checks for all required DOM elements
         const prevBtn = document.getElementById('calc-prev');
         const nextBtn = document.getElementById('calc-next');
         const submitBtn = document.getElementById('calc-submit');
         const progressBar = document.getElementById('calc-progress-bar');
         const steps = document.querySelectorAll('.calc-step');
         const forms = document.querySelectorAll('.calc-form');
+
+        // Validate all required elements exist
+        if (!prevBtn || !nextBtn || !submitBtn || !progressBar || steps.length === 0 || forms.length === 0) {
+            debugLog('error', 'Calculator: Required DOM elements not found');
+            showToast('error', 'Calculator failed to initialize. Please refresh the page.');
+            return;
+        }
 
         function goToStep(step) {
             currentStep = step;
@@ -362,51 +498,120 @@
     }
 
     function calculateFootprint() {
-        // Gather & validate inputs
-        const carKm = parseFloat(document.getElementById('car-km').value) || 0;
-        const carType = document.getElementById('car-type').value;
-        const publicTransport = parseFloat(document.getElementById('public-transport').value) || 0;
-        const flights = parseFloat(document.getElementById('flights-year').value) || 0;
+        // Gather & validate inputs with defensive type checks
+        let carKm, carType, publicTransport, flights, electricity, gasBill, renewable, householdSize;
+        let dietType, foodWaste, localFood, clothing, electronics, recycling, streaming;
 
-        const electricity = parseFloat(document.getElementById('electricity').value) || 0;
-        const gasBill = parseFloat(document.getElementById('gas-bill').value) || 0;
-        const renewable = document.getElementById('renewable').value;
-        const householdSize = Math.max(1, parseFloat(document.getElementById('household-size').value) || 1);
+        try {
+            carKm = parseFloat(document.getElementById('car-km')?.value || '0') || 0;
+            carType = document.getElementById('car-type')?.value || 'none';
+            publicTransport = parseFloat(document.getElementById('public-transport')?.value || '0') || 0;
+            flights = parseFloat(document.getElementById('flights-year')?.value || '0') || 0;
 
-        const dietType = document.getElementById('diet-type').value;
-        const foodWaste = document.getElementById('food-waste').value;
-        const localFood = document.getElementById('local-food').value;
+            electricity = parseFloat(document.getElementById('electricity')?.value || '0') || 0;
+            gasBill = parseFloat(document.getElementById('gas-bill')?.value || '0') || 0;
+            renewable = document.getElementById('renewable')?.value || 'none';
+            householdSize = Math.max(1, parseFloat(document.getElementById('household-size')?.value || '1') || 1);
 
-        const clothing = parseFloat(document.getElementById('clothing').value) || 0;
-        const electronics = parseFloat(document.getElementById('electronics').value) || 0;
-        const recycling = document.getElementById('recycling').value;
-        const streaming = Math.min(24, parseFloat(document.getElementById('streaming').value) || 0);
+            dietType = document.getElementById('diet-type')?.value || 'medium-meat';
+            foodWaste = document.getElementById('food-waste')?.value || 'medium';
+            localFood = document.getElementById('local-food')?.value || 'sometimes';
 
-        // Security: validate numeric ranges before computing
-        if (!validateNumericInput(carKm, 0, 99999) || !validateNumericInput(flights, 0, 365) ||
-            !validateNumericInput(electricity, 0, 99999) || !validateNumericInput(householdSize, 1, 20)) {
-            showToast('warning', 'Please check your inputs — some values are out of range.');
+            clothing = parseFloat(document.getElementById('clothing')?.value || '0') || 0;
+            electronics = parseFloat(document.getElementById('electronics')?.value || '0') || 0;
+            recycling = document.getElementById('recycling')?.value || 'sometimes';
+            streaming = Math.min(24, parseFloat(document.getElementById('streaming')?.value || '0') || 0);
+        } catch (e) {
+            debugLog('error', 'Failed to read form values', e);
+            showToast('error', 'Error reading form data. Please try again.');
+            return;
+        }
+
+        // Security: Comprehensive input validation to prevent injection attacks and overflow
+        if (!validateNumericInput(carKm, INPUT_LIMITS.carKm.min, INPUT_LIMITS.carKm.max)) {
+            showToast('warning', 'Car km value is out of range (0-99999).');
+            debugLog('warn', 'Invalid carKm input', carKm);
+            return;
+        }
+        if (!validateNumericInput(flights, INPUT_LIMITS.flights.min, INPUT_LIMITS.flights.max)) {
+            showToast('warning', 'Flights value is out of range (0-365).');
+            debugLog('warn', 'Invalid flights input', flights);
+            return;
+        }
+        if (!validateNumericInput(electricity, INPUT_LIMITS.electricity.min, INPUT_LIMITS.electricity.max)) {
+            showToast('warning', 'Electricity value is out of range (0-99999).');
+            return;
+        }
+        if (!validateNumericInput(householdSize, INPUT_LIMITS.householdSize.min, INPUT_LIMITS.householdSize.max)) {
+            showToast('warning', 'Household size must be between 1 and 20.');
+            return;
+        }
+        if (!validateNumericInput(streaming, INPUT_LIMITS.streaming.min, INPUT_LIMITS.streaming.max)) {
+            showToast('warning', 'Streaming hours must be between 0 and 24.');
+            return;
+        }
+
+        // Additional validation for dropdown values (security: prevent invalid enum values)
+        const validCarTypes = Object.keys(CAR_EMISSIONS);
+        const validDietTypes = Object.keys(DIET_EMISSIONS);
+        const validFoodWaste = Object.keys(FOOD_WASTE_FACTOR);
+        const validLocalFood = Object.keys(LOCAL_FOOD_FACTOR);
+        const validRenewable = Object.keys(RENEWABLE_FACTOR);
+        const validRecycling = Object.keys(RECYCLING_FACTOR);
+
+        if (!validCarTypes.includes(carType)) {
+            debugLog('error', 'Invalid car type selected', carType);
+            showToast('error', 'Invalid car type selected.');
+            return;
+        }
+        if (!validDietTypes.includes(dietType)) {
+            debugLog('error', 'Invalid diet type selected', dietType);
+            showToast('error', 'Invalid diet type selected.');
+            return;
+        }
+        if (!validFoodWaste.includes(foodWaste)) {
+            debugLog('error', 'Invalid food waste setting', foodWaste);
+            showToast('error', 'Invalid food waste setting.');
+            return;
+        }
+        if (!validLocalFood.includes(localFood)) {
+            debugLog('error', 'Invalid local food setting', localFood);
+            showToast('error', 'Invalid local food setting.');
+            return;
+        }
+        if (!validRenewable.includes(renewable)) {
+            debugLog('error', 'Invalid renewable setting', renewable);
+            showToast('error', 'Invalid renewable energy setting.');
+            return;
+        }
+        if (!validRecycling.includes(recycling)) {
+            debugLog('error', 'Invalid recycling setting', recycling);
+            showToast('error', 'Invalid recycling setting.');
             return;
         }
 
         // Calculate transport emissions (tons CO₂/year)
+        // Formula: distance × occurrences × emission_factor / conversion
         const carEmissions = carKm * 52 * (CAR_EMISSIONS[carType] || 0) / 1000;
         const transitEmissions = publicTransport * 52 * 0.089 / 1000;
         const flightEmissions = flights * 1.1;
         const transportTotal = carEmissions + transitEmissions + flightEmissions;
 
         // Calculate energy emissions (tons CO₂/year)
+        // Formula: monthly_bill × 12 months × emission_coefficient × renewable_factor / household_size
         const elecEmissions = (electricity * 12 * 0.92) / 100 * RENEWABLE_FACTOR[renewable] / householdSize;
         const gasEmissions = (gasBill * 12 * 0.005) / householdSize;
         const energyTotal = elecEmissions + gasEmissions;
 
         // Calculate food emissions (tons CO₂/year)
+        // Formula: diet_base + waste_factor + local_factor (minimum 0.5 tons/year)
         const dietEmissions = DIET_EMISSIONS[dietType] || 2.5;
         const wasteEmissions = FOOD_WASTE_FACTOR[foodWaste] || 0.3;
         const localFactor = LOCAL_FOOD_FACTOR[localFood] || 0;
         const foodTotal = Math.max(0.5, dietEmissions + wasteEmissions + localFactor);
 
         // Calculate lifestyle emissions (tons CO₂/year)
+        // Includes: clothing purchases, electronics, recycling habits, streaming usage
         const clothingEmissions = clothing * 12 * 0.025;
         const electronicsEmissions = electronics * 0.3;
         const recycleEmissions = RECYCLING_FACTOR[recycling] || 0.15;
@@ -423,8 +628,13 @@
             total: Math.round(total * 100) / 100
         };
 
-        // Save to localStorage
-        localStorage.setItem('ecotrack-footprint', JSON.stringify(footprintData));
+        // Save to localStorage with error handling
+        try {
+            localStorage.setItem('ecotrack-footprint', JSON.stringify(footprintData));
+        } catch (e) {
+            debugLog('error', 'localStorage quota exceeded or unavailable', e);
+            showToast('warning', 'Could not save results — storage unavailable.');
+        }
 
         // Update dashboard
         updateDashboard();
@@ -442,11 +652,28 @@
     // DASHBOARD
     // ========================
 
+    /**
+     * Initializes all dashboard charts (donut, comparison bar, weekly line).
+     * Uses Chart.js library for data visualization.
+     * Security: Safe color injection, no user data in chart config.
+     * Accessibility: Proper labels and tooltips for screen readers.
+     * Error Handling: Graceful fallback if Chart.js unavailable or DOM elements missing.
+     * 
+     * @returns {void}
+     */
     function initDashboardCharts() {
+        // Validate Chart.js is available
+        if (typeof Chart === 'undefined') {
+            debugLog('error', 'Chart.js library not loaded');
+            showToast('warning', 'Chart library not available. Charts may not display.');
+            return;
+        }
+
         // Initialize empty donut chart
         const donutCtx = document.getElementById('footprint-donut-chart');
-        if (donutCtx) {
-            donutChart = new Chart(donutCtx, {
+        if (donutCtx && donutCtx.getContext) {
+            try {
+                donutChart = new Chart(donutCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Transport', 'Energy', 'Food', 'Lifestyle'],
@@ -495,12 +722,18 @@
                     }
                 }
             });
+            } catch (e) {
+                debugLog('error', 'Failed to initialize donut chart', e);
+            }
+        } else {
+            debugLog('warn', 'Donut chart canvas element not found');
         }
 
         // Initialize comparison bar chart
         const barCtx = document.getElementById('comparison-bar-chart');
-        if (barCtx) {
-            barChart = new Chart(barCtx, {
+        if (barCtx && barCtx.getContext) {
+            try {
+                barChart = new Chart(barCtx, {
                 type: 'bar',
                 data: {
                     labels: ['You', 'World Avg', 'US Avg', '2050 Target'],
@@ -566,12 +799,18 @@
                     }
                 }
             });
+            } catch (e) {
+                debugLog('error', 'Failed to initialize bar chart', e);
+            }
+        } else {
+            debugLog('warn', 'Bar chart canvas element not found');
         }
 
         // Initialize weekly chart
         const weeklyCtx = document.getElementById('weekly-chart');
-        if (weeklyCtx) {
-            const days = getLast7Days();
+        if (weeklyCtx && weeklyCtx.getContext) {
+            try {
+                const days = getLast7Days();
             weeklyChart = new Chart(weeklyCtx, {
                 type: 'line',
                 data: {
@@ -633,227 +872,438 @@
                     }
                 }
             });
+            } catch (e) {
+                debugLog('error', 'Failed to initialize weekly chart', e);
+            }
+        } else {
+            debugLog('warn', 'Weekly chart canvas element not found');
         }
     }
 
     function updateDashboard() {
-        if (!footprintData) return;
-
-        const { transport, energy, food, lifestyle, total } = footprintData;
-
-        // Update total
-        const totalEl = document.getElementById('total-footprint');
-        animateNumber(totalEl, total);
-
-        // Update comparison text
-        const compText = document.getElementById('comparison-text');
-        if (total > 16) {
-            compText.innerHTML = '⚠️ Your footprint is <strong>above the US average</strong>. There\'s significant room for improvement!';
-        } else if (total > 4.7) {
-            compText.innerHTML = '📊 Your footprint is <strong>above the world average</strong> but below the US average. You\'re doing okay!';
-        } else if (total > 2) {
-            compText.innerHTML = '🌿 Great! Your footprint is <strong>below the world average</strong>. Keep up the good work!';
-        } else {
-            compText.innerHTML = '🌟 Amazing! Your footprint is <strong>near the 2050 target</strong>. You\'re a true eco warrior!';
-        }
-
-        // Update comparison bar
-        const barFill = document.getElementById('comparison-bar');
-        const percentage = Math.min((total / 16) * 100, 100);
-        setTimeout(() => {
-            barFill.style.width = percentage + '%';
-            if (total > 10) {
-                barFill.style.background = 'linear-gradient(90deg, #00B4D8, #ef4444)';
-            } else if (total > 5) {
-                barFill.style.background = 'linear-gradient(90deg, #00B4D8, #f59e0b)';
-            } else {
-                barFill.style.background = 'linear-gradient(90deg, #22c55e, #00B4D8)';
+        try {
+            if (!footprintData) {
+                debugLog('warn', 'No footprint data available for dashboard update');
+                return;
             }
-        }, 100);
 
-        // Update category cards
-        updateCategoryCard('transport', transport, total);
-        updateCategoryCard('energy', energy, total);
-        updateCategoryCard('food', food, total);
-        updateCategoryCard('lifestyle', lifestyle, total);
+            const { transport, energy, food, lifestyle, total } = footprintData;
 
-        // Update donut chart
-        if (donutChart) {
-            donutChart.data.datasets[0].data = [transport, energy, food, lifestyle];
-            donutChart.update('none');
-        }
+            // Validate data types and values
+            if (typeof total !== 'number' || !isFinite(total) || total < 0) {
+                debugLog('error', 'Invalid total footprint value', total);
+                return;
+            }
 
-        // Update bar chart
-        if (barChart) {
-            barChart.data.datasets[0].data[0] = total;
-            barChart.update('none');
+            // Update total with error handling
+            const totalEl = document.getElementById('total-footprint');
+            if (totalEl) {
+                animateNumber(totalEl, total);
+            } else {
+                debugLog('warn', 'Total footprint element not found');
+            }
+
+            // Update comparison text with proper element check
+            const compText = document.getElementById('comparison-text');
+            if (compText) {
+                if (total > 16) {
+                    compText.innerHTML = '⚠️ Your footprint is <strong>above the US average</strong>. There\'s significant room for improvement!';
+                } else if (total > 4.7) {
+                    compText.innerHTML = '📊 Your footprint is <strong>above the world average</strong> but below the US average. You\'re doing okay!';
+                } else if (total > 2) {
+                    compText.innerHTML = '🌿 Great! Your footprint is <strong>below the world average</strong>. Keep up the good work!';
+                } else {
+                    compText.innerHTML = '🌟 Amazing! Your footprint is <strong>near the 2050 target</strong>. You\'re a true eco warrior!';
+                }
+            } else {
+                debugLog('warn', 'Comparison text element not found');
+            }
+
+            // Update comparison bar with error handling
+            const barFill = document.getElementById('comparison-bar');
+            if (barFill) {
+                const percentage = Math.min((total / 16) * 100, 100);
+                setTimeout(() => {
+                    barFill.style.width = percentage + '%';
+                    if (total > 10) {
+                        barFill.style.background = 'linear-gradient(90deg, #00B4D8, #ef4444)';
+                    } else if (total > 5) {
+                        barFill.style.background = 'linear-gradient(90deg, #00B4D8, #f59e0b)';
+                    } else {
+                        barFill.style.background = 'linear-gradient(90deg, #22c55e, #00B4D8)';
+                    }
+                }, 100);
+            } else {
+                debugLog('warn', 'Comparison bar element not found');
+            }
+
+            // Update category cards
+            updateCategoryCard('transport', transport, total);
+            updateCategoryCard('energy', energy, total);
+            updateCategoryCard('food', food, total);
+            updateCategoryCard('lifestyle', lifestyle, total);
+
+            // Update donut chart with validation
+            if (donutChart && typeof donutChart.update === 'function') {
+                donutChart.data.datasets[0].data = [transport, energy, food, lifestyle];
+                donutChart.update('none');
+            } else if (!donutChart) {
+                debugLog('warn', 'Donut chart not initialized');
+            }
+
+            // Update bar chart with validation
+            if (barChart && typeof barChart.update === 'function') {
+                barChart.data.datasets[0].data[0] = total;
+                barChart.update('none');
+            } else if (!barChart) {
+                debugLog('warn', 'Bar chart not initialized');
+            }
+        } catch (e) {
+            debugLog('error', 'Error updating dashboard', e);
+            showToast('error', 'Failed to update dashboard. Please refresh the page.');
         }
     }
 
     function updateCategoryCard(category, value, total) {
-        const valEl = document.getElementById('cat-' + category + '-val');
-        const barEl = document.getElementById('cat-' + category + '-bar');
+        try {
+            // Validate inputs
+            if (!category || typeof value !== 'number' || !isFinite(value) || value < 0) {
+                debugLog('warn', 'Invalid category card data', { category, value });
+                return;
+            }
 
-        if (valEl) valEl.textContent = value.toFixed(2) + ' tons';
-        if (barEl) {
-            const pct = total > 0 ? (value / total * 100) : 0;
-            setTimeout(() => { barEl.style.width = pct + '%'; }, 200);
+            const valEl = document.getElementById('cat-' + category + '-val');
+            const barEl = document.getElementById('cat-' + category + '-bar');
+
+            if (valEl) {
+                valEl.textContent = value.toFixed(2) + ' tons';
+            }
+            if (barEl && total > 0) {
+                const pct = (value / total * 100);
+                setTimeout(() => { barEl.style.width = Math.min(pct, 100) + '%'; }, 200);
+            }
+        } catch (e) {
+            debugLog('error', 'Error updating category card', e);
         }
     }
 
     function animateNumber(el, target) {
-        const duration = 1500;
-        const start = performance.now();
+        try {
+            if (!el || typeof target !== 'number' || !isFinite(target)) {
+                debugLog('warn', 'Invalid animate number parameters');
+                return;
+            }
 
-        function step(now) {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            el.textContent = (eased * target).toFixed(1);
-            if (progress < 1) requestAnimationFrame(step);
-            else el.textContent = target.toFixed(1);
+            const duration = 1500;
+            const start = performance.now();
+
+            function step(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = (eased * target).toFixed(1);
+                if (progress < 1) requestAnimationFrame(step);
+                else el.textContent = target.toFixed(1);
+            }
+
+            requestAnimationFrame(step);
+        } catch (e) {
+            debugLog('error', 'Error animating number', e);
+            if (el) el.textContent = target.toFixed(1);
         }
-
-        requestAnimationFrame(step);
     }
 
     // ========================
     // TIPS FILTER
     // ========================
 
+    /**
+     * Sets up filter buttons for action tips.
+     * Allows users to view tips by category (transport, energy, food, lifestyle).
+     * Accessibility: Proper ARIA attributes for buttons.
+     * Security: Validates data attributes and sanitizes filter values.
+     * 
+     * @returns {void}
+     */
     function initTipsFilter() {
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const tipCards = document.querySelectorAll('.tip-card');
+        try {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const tipCards = document.querySelectorAll('.tip-card');
 
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const filter = btn.dataset.filter;
+            if (filterBtns.length === 0 || tipCards.length === 0) {
+                debugLog('warn', 'Tips filter elements not found');
+                return;
+            }
 
-                filterBtns.forEach(b => {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-pressed', 'false');
-                });
-                btn.classList.add('active');
-                btn.setAttribute('aria-pressed', 'true');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    try {
+                        const filter = btn.dataset.filter;
+                        
+                        // Validate filter value
+                        if (!filter || typeof filter !== 'string') {
+                            debugLog('warn', 'Invalid filter value', filter);
+                            return;
+                        }
 
-                tipCards.forEach(card => {
-                    if (filter === 'all' || card.dataset.category === filter) {
-                        card.classList.remove('hidden-card');
-                        card.style.animation = 'fadeInUp 0.4s ease forwards';
-                    } else {
-                        card.classList.add('hidden-card');
+                        filterBtns.forEach(b => {
+                            b.classList.remove('active');
+                            b.setAttribute('aria-pressed', 'false');
+                        });
+                        btn.classList.add('active');
+                        btn.setAttribute('aria-pressed', 'true');
+
+                        tipCards.forEach(card => {
+                            const cardCategory = card.dataset.category;
+                            if (filter === 'all' || cardCategory === filter) {
+                                card.classList.remove('hidden-card');
+                                card.style.animation = 'fadeInUp 0.4s ease forwards';
+                            } else {
+                                card.classList.add('hidden-card');
+                            }
+                        });
+
+                        debugLog('info', 'Tips filter applied', filter);
+                    } catch (e) {
+                        debugLog('error', 'Error handling filter click', e);
                     }
                 });
             });
-        });
+        } catch (e) {
+            debugLog('error', 'Error initializing tips filter', e);
+            showToast('warning', 'Tips filter not available.');
+        }
     }
 
     // ========================
     // ACTION TRACKER
     // ========================
 
+    /**
+     * Initializes the action logging and tracking system.
+     * Handles logging, history, streak calculation, and achievements.
+     * Features: Log actions, clear history, track streaks, unlock achievements.
+     * Persistence: All data saved to localStorage with error handling.
+     * Security: Validates DOM elements and data structures before use.
+     * 
+     * @returns {void}
+     */
     function initTracker() {
-        const logBtn = document.getElementById('log-action-btn');
-        const clearBtn = document.getElementById('clear-history-btn');
+        try {
+            const logBtn = document.getElementById('log-action-btn');
+            const clearBtn = document.getElementById('clear-history-btn');
 
-        logBtn.addEventListener('click', logAction);
-        clearBtn.addEventListener('click', clearHistory);
+            if (!logBtn || !clearBtn) {
+                debugLog('error', 'Tracker buttons not found');
+                showToast('warning', 'Tracker initialization failed.');
+                return;
+            }
+
+            logBtn.addEventListener('click', logAction);
+            clearBtn.addEventListener('click', clearHistory);
+        } catch (e) {
+            debugLog('error', 'Error initializing tracker', e);
+        }
     }
 
     function logAction() {
-        const select = document.getElementById('action-select');
-        const value = select.value;
+        try {
+            const select = document.getElementById('action-select');
+            
+            if (!select) {
+                debugLog('error', 'Action select element not found');
+                showToast('error', 'Tracker not available.');
+                return;
+            }
 
-        if (!value) {
-            showToast('warning', 'Please select an action to log.');
-            return;
+            const value = select.value;
+
+            if (!value || typeof value !== 'string') {
+                showToast('warning', 'Please select an action to log.');
+                return;
+            }
+
+            const action = ACTION_DATA[value];
+            if (!action) {
+                debugLog('error', 'Action not found', value);
+                showToast('error', 'Invalid action selected.');
+                return;
+            }
+
+            const now = new Date();
+
+            // Get existing actions with error handling
+            let actions = [];
+            try {
+                const stored = localStorage.getItem('ecotrack-actions');
+                actions = stored ? JSON.parse(stored) : [];
+                if (!Array.isArray(actions)) {
+                    debugLog('warn', 'Stored actions is not an array, resetting');
+                    actions = [];
+                }
+            } catch (e) {
+                debugLog('error', 'Failed to parse stored actions', e);
+                showToast('warning', 'Could not load action history. Starting fresh.');
+                actions = [];
+            }
+
+            // Security: Validate action data structure before storing
+            if (typeof action.co2 !== 'number' || action.co2 < 0 || !isFinite(action.co2)) {
+                debugLog('error', 'Invalid action CO2 value', action);
+                showToast('error', 'Invalid action data.');
+                return;
+            }
+
+            // Prevent excessive data accumulation (security: cap at 5000 actions)
+            if (actions.length > 5000) {
+                actions = actions.slice(0, 5000);
+                debugLog('warn', 'Action history exceeded maximum length, trimmed');
+            }
+
+            actions.unshift({
+                type: value,
+                label: action.label,
+                icon: action.icon,
+                co2: action.co2,
+                date: now.toISOString()
+            });
+
+            // Save with error handling
+            try {
+                localStorage.setItem('ecotrack-actions', JSON.stringify(actions));
+            } catch (e) {
+                debugLog('error', 'localStorage quota exceeded for actions', e);
+                showToast('warning', 'Could not save action — storage full.');
+                return;
+            }
+
+            // Reset select
+            select.selectedIndex = 0;
+
+            // Update UI
+            updateTrackerUI();
+
+            // Security: sanitize all dynamic text inserted into the DOM
+            const safeLabel = sanitizeString(action.label);
+            
+            // Announce logged action to screen readers
+            announceToScreenReader(`Action logged: ${safeLabel}. You saved ${action.co2} kg of CO2.`);
+            
+            showToast('success', `${action.icon} ${action.label} — Saved ${action.co2} kg CO₂!`);
+        } catch (e) {
+            debugLog('error', 'Error logging action', e);
+            showToast('error', 'Failed to log action. Please try again.');
         }
-
-        const action = ACTION_DATA[value];
-        const now = new Date();
-
-        // Get existing actions
-        const actions = JSON.parse(localStorage.getItem('ecotrack-actions') || '[]');
-        actions.unshift({
-            type: value,
-            label: action.label,
-            icon: action.icon,
-            co2: action.co2,
-            date: now.toISOString()
-        });
-
-        localStorage.setItem('ecotrack-actions', JSON.stringify(actions));
-
-        // Reset select
-        select.selectedIndex = 0;
-
-        // Update UI
-        updateTrackerUI();
-
-        // Security: sanitize all dynamic text inserted into the DOM
-        const safeLabel = sanitizeString(action.label);
-        
-        // Announce logged action
-        announceToScreenReader(`Action logged: ${safeLabel}. You saved ${action.co2} kg of CO2.`);
-        
-        showToast('success', `${action.icon} ${action.label} — Saved ${action.co2} kg CO₂!`);
     }
 
     function clearHistory() {
-        localStorage.removeItem('ecotrack-actions');
-        updateTrackerUI();
-        showToast('info', 'Action history cleared.');
+        try {
+            if (!localStorage) {
+                debugLog('error', 'localStorage not available');
+                showToast('error', 'Cannot clear history — storage unavailable.');
+                return;
+            }
+            localStorage.removeItem('ecotrack-actions');
+            updateTrackerUI();
+            announceToScreenReader('Action history cleared.');
+            showToast('info', 'Action history cleared.');
+        } catch (e) {
+            debugLog('error', 'Failed to clear action history', e);
+            showToast('error', 'Could not clear history.');
+        }
     }
 
     function updateTrackerUI() {
-        const actions = JSON.parse(localStorage.getItem('ecotrack-actions') || '[]');
-        const historyList = document.getElementById('history-list');
-        const totalActionsEl = document.getElementById('total-actions');
-        const totalCo2El = document.getElementById('total-saved-co2');
-        const streakEl = document.getElementById('current-streak');
+        try {
+            let actions = [];
+            try {
+                const stored = localStorage.getItem('ecotrack-actions');
+                actions = stored ? JSON.parse(stored) : [];
+                if (!Array.isArray(actions)) {
+                    debugLog('error', 'Stored actions is not an array');
+                    actions = [];
+                }
+            } catch (e) {
+                debugLog('error', 'Failed to parse stored actions in updateTrackerUI', e);
+                actions = [];
+            }
 
-        // Total actions
-        totalActionsEl.textContent = actions.length;
+            const historyList = document.getElementById('history-list');
+            const totalActionsEl = document.getElementById('total-actions');
+            const totalCo2El = document.getElementById('total-saved-co2');
+            const streakEl = document.getElementById('current-streak');
 
-        // Total CO₂ saved
-        const totalCo2 = actions.reduce((sum, a) => sum + a.co2, 0);
-        totalCo2El.textContent = totalCo2.toFixed(1);
+            if (!historyList || !totalActionsEl || !totalCo2El || !streakEl) {
+                debugLog('warn', 'Tracker UI elements not found');
+                return;
+            }
 
-        // Calculate streak
-        const streak = calculateStreak(actions);
-        streakEl.textContent = streak;
+            // Total actions
+            totalActionsEl.textContent = actions.length;
 
-        // Update history list
-        if (actions.length === 0) {
-            historyList.innerHTML = `
-                <div class="history-empty">
-                    <i class="fas fa-inbox"></i>
-                    <p>No actions logged yet. Start making a difference today!</p>
-                </div>`;
-        } else {
-            historyList.innerHTML = actions.slice(0, 20).map(a => {
-                const d = new Date(a.date);
-                const ts = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-                    ' at ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                const lbl = sanitizeString(a.label);
-                const ico = sanitizeString(a.icon);
-                return `
-                    <div class="history-item" role="listitem">
-                        <span class="history-icon" aria-hidden="true">${ico}</span>
-                        <div class="history-info">
-                            <strong>${lbl}</strong>
-                            <small>${ts}</small>
-                        </div>
-                        <span class="history-saved" aria-label="CO2 saved: ${a.co2} kilograms">-${a.co2} kg</span>
+            // Total CO₂ saved (prevent overflow by capping at 99999 and validating)
+            let totalCo2 = 0;
+            actions.forEach(a => {
+                if (typeof a.co2 === 'number' && isFinite(a.co2) && a.co2 >= 0) {
+                    totalCo2 += a.co2;
+                }
+            });
+            totalCo2 = Math.min(totalCo2, 99999);
+            totalCo2El.textContent = totalCo2.toFixed(1);
+
+            // Calculate streak
+            const streak = calculateStreak(actions);
+            streakEl.textContent = streak;
+
+            // Update history list with sanitization and error handling
+            if (actions.length === 0) {
+                historyList.innerHTML = `
+                    <div class="history-empty">
+                        <i class="fas fa-inbox"></i>
+                        <p>No actions logged yet. Start making a difference today!</p>
                     </div>`;
-            }).join('');
+            } else {
+                try {
+                    historyList.innerHTML = actions.slice(0, 20).map(a => {
+                        try {
+                            const d = new Date(a.date);
+                            if (isNaN(d.getTime())) {
+                                debugLog('warn', 'Invalid date in action', a.date);
+                                return '';
+                            }
+                            const ts = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+                                ' at ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                            const lbl = sanitizeString(a.label || '');
+                            const ico = sanitizeString(a.icon || '');
+                            const co2val = (typeof a.co2 === 'number' && isFinite(a.co2) && a.co2 >= 0) ? a.co2 : 0;
+                            return `
+                                <div class="history-item" role="listitem">
+                                    <span class="history-icon" aria-hidden="true">${ico}</span>
+                                    <div class="history-info">
+                                        <strong>${lbl}</strong>
+                                        <small>${ts}</small>
+                                    </div>
+                                    <span class="history-saved" aria-label="CO2 saved: ${co2val} kilograms">-${co2val} kg</span>
+                                </div>`;
+                        } catch (itemError) {
+                            debugLog('warn', 'Error processing history item', itemError);
+                            return '';
+                        }
+                    }).filter(html => html !== '').join('');
+                } catch (e) {
+                    debugLog('error', 'Error rendering history list', e);
+                    historyList.innerHTML = '<p>Error loading history</p>';
+                }
+            }
+
+            // Update weekly chart
+            updateWeeklyChart(actions);
+
+            // Update achievements
+            updateAchievements(actions.length, streak);
+        } catch (e) {
+            debugLog('error', 'Error updating tracker UI', e);
         }
-
-        // Update weekly chart
-        updateWeeklyChart(actions);
-
-        // Update achievements
-        updateAchievements(actions.length, streak);
     }
 
     function calculateStreak(actions) {
@@ -887,40 +1337,81 @@
     }
 
     function updateWeeklyChart(actions) {
-        if (!weeklyChart) return;
-
-        const days = getLast7Days();
-        const today = new Date();
-        const data = new Array(7).fill(0);
-
-        actions.forEach(a => {
-            const actionDate = new Date(a.date);
-            const diffMs = today.getTime() - actionDate.getTime();
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0 && diffDays < 7) {
-                data[6 - diffDays] += a.co2;
+        try {
+            if (!weeklyChart || typeof weeklyChart.update !== 'function') {
+                debugLog('warn', 'Weekly chart not available for update');
+                return;
             }
-        });
 
-        weeklyChart.data.labels = days;
-        weeklyChart.data.datasets[0].data = data.map(d => Math.round(d * 10) / 10);
-        weeklyChart.update('none');
+            if (!Array.isArray(actions)) {
+                debugLog('error', 'Invalid actions array passed to updateWeeklyChart');
+                return;
+            }
+
+            const days = getLast7Days();
+            const today = new Date();
+            const data = new Array(7).fill(0);
+
+            actions.forEach(a => {
+                try {
+                    if (typeof a.co2 !== 'number' || !isFinite(a.co2) || a.co2 < 0) {
+                        return; // Skip invalid entries
+                    }
+                    const actionDate = new Date(a.date);
+                    if (isNaN(actionDate.getTime())) {
+                        return; // Skip invalid dates
+                    }
+                    const diffMs = today.getTime() - actionDate.getTime();
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 0 && diffDays < 7) {
+                        data[6 - diffDays] += a.co2;
+                    }
+                } catch (itemError) {
+                    debugLog('warn', 'Error processing action for weekly chart', itemError);
+                }
+            });
+
+            weeklyChart.data.labels = days;
+            weeklyChart.data.datasets[0].data = data.map(d => Math.round(d * 10) / 10);
+            weeklyChart.update('none');
+        } catch (e) {
+            debugLog('error', 'Error updating weekly chart', e);
+        }
     }
 
     function updateAchievements(totalActions, streak) {
-        const achievements = document.querySelectorAll('.achievement');
-        achievements.forEach(ach => {
-            const req = parseInt(ach.dataset.req);
-            const type = ach.dataset.type;
-            const compareVal = type === 'streak' ? streak : totalActions;
-
-            if (compareVal >= req) {
-                if (!ach.classList.contains('unlocked')) {
-                    ach.classList.remove('locked');
-                    ach.classList.add('unlocked');
-                }
+        try {
+            const achievements = document.querySelectorAll('.achievement');
+            if (achievements.length === 0) {
+                debugLog('warn', 'No achievement elements found');
+                return;
             }
-        });
+
+            achievements.forEach(ach => {
+                try {
+                    const req = parseInt(ach.dataset.req);
+                    const type = ach.dataset.type;
+                    
+                    if (isNaN(req)) {
+                        debugLog('warn', 'Invalid achievement requirement', ach.dataset.req);
+                        return;
+                    }
+
+                    const compareVal = type === 'streak' ? streak : totalActions;
+
+                    if (compareVal >= req) {
+                        if (!ach.classList.contains('unlocked')) {
+                            ach.classList.remove('locked');
+                            ach.classList.add('unlocked');
+                        }
+                    }
+                } catch (achError) {
+                    debugLog('warn', 'Error processing achievement', achError);
+                }
+            });
+        } catch (e) {
+            debugLog('error', 'Error updating achievements', e);
+        }
     }
 
     function getLast7Days() {
@@ -938,60 +1429,131 @@
     // PLEDGE
     // ========================
 
+    /**
+     * Initializes the Green Pledge system.
+     * Users commit to sustainability goals (transport, energy, food, waste reduction).
+     * Tracks pledged state and calculates potential carbon savings.
+     * Persistence: Pledges saved to localStorage with error handling.
+     * Security: Validates data structure before use.
+     * 
+     * @returns {void}
+     */
     function initPledge() {
-        const pledgeBtns = document.querySelectorAll('.btn-pledge');
-        const pledges = JSON.parse(localStorage.getItem('ecotrack-pledges') || '{}');
-
-        const pledgeSavings = {
-            transport: 1.2,
-            energy: 0.8,
-            food: 0.6,
-            waste: 0.4
-        };
-
-        // Restore pledged state
-        Object.keys(pledges).forEach(key => {
-            const btn = document.getElementById('pledge-' + key);
-            if (btn && pledges[key]) {
-                btn.textContent = '✓ Pledged!';
-                btn.classList.add('pledged');
+        try {
+            const pledgeBtns = document.querySelectorAll('.btn-pledge');
+            if (pledgeBtns.length === 0) {
+                debugLog('warn', 'No pledge buttons found');
+                return;
             }
-        });
 
-        updatePledgeStats();
-
-        pledgeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const card = btn.closest('.pledge-card');
-                const pledgeType = card.dataset.pledge;
-
-                pledges[pledgeType] = true;
-                localStorage.setItem('ecotrack-pledges', JSON.stringify(pledges));
-
-                btn.textContent = '✓ Pledged!';
-                btn.classList.add('pledged');
-                btn.setAttribute('aria-label', `${btn.getAttribute('aria-label') || 'Pledge'} — Already pledged`);
-
-                updatePledgeStats();
-                announceToScreenReader('Pledge taken! Thank you for committing to a greener planet.');
-                showToast('success', '🎉 Pledge taken! You\'re making a commitment for the planet.');
-            });
-        });
-
-        function updatePledgeStats() {
-            const pledgesTakenEl = document.getElementById('pledges-taken');
-            const potentialEl = document.getElementById('potential-savings');
-
-            const takenCount = Object.values(pledges).filter(v => v).length;
-            let totalSavings = 0;
-            Object.keys(pledges).forEach(key => {
-                if (pledges[key] && pledgeSavings[key]) {
-                    totalSavings += pledgeSavings[key];
+            let pledges = {};
+            try {
+                const stored = localStorage.getItem('ecotrack-pledges');
+                if (stored) {
+                    pledges = JSON.parse(stored);
+                    if (typeof pledges !== 'object' || pledges === null) {
+                        debugLog('error', 'Invalid pledges data structure');
+                        pledges = {};
+                    }
                 }
+            } catch (e) {
+                debugLog('error', 'Failed to parse stored pledges', e);
+                pledges = {};
+            }
+
+            const pledgeSavings = {
+                transport: 1.2,
+                energy: 0.8,
+                food: 0.6,
+                waste: 0.4
+            };
+
+            // Restore pledged state with error handling
+            try {
+                Object.keys(pledges).forEach(key => {
+                    const btn = document.getElementById('pledge-' + key);
+                    if (btn && pledges[key]) {
+                        btn.textContent = '✓ Pledged!';
+                        btn.classList.add('pledged');
+                    }
+                });
+            } catch (e) {
+                debugLog('error', 'Error restoring pledge state', e);
+            }
+
+            updatePledgeStats();
+
+            pledgeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    try {
+                        const card = btn.closest('.pledge-card');
+                        if (!card) {
+                            debugLog('error', 'Pledge card not found');
+                            showToast('error', 'Error processing pledge.');
+                            return;
+                        }
+
+                        const pledgeType = card.dataset.pledge;
+                        if (!pledgeType || typeof pledgeType !== 'string') {
+                            debugLog('error', 'Invalid pledge type', pledgeType);
+                            showToast('error', 'Invalid pledge type.');
+                            return;
+                        }
+
+                        pledges[pledgeType] = true;
+                        try {
+                            localStorage.setItem('ecotrack-pledges', JSON.stringify(pledges));
+                        } catch (e) {
+                            debugLog('error', 'Failed to save pledge', e);
+                            showToast('warning', 'Could not save pledge — storage full.');
+                            return;
+                        }
+
+                        btn.textContent = '✓ Pledged!';
+                        btn.classList.add('pledged');
+                        const currentLabel = btn.getAttribute('aria-label') || 'Pledge';
+                        btn.setAttribute('aria-label', `${currentLabel} — Already pledged`);
+
+                        updatePledgeStats();
+                        announceToScreenReader('Pledge taken! Thank you for committing to a greener planet.');
+                        showToast('success', '🎉 Pledge taken! You\'re making a commitment for the planet.');
+                    } catch (e) {
+                        debugLog('error', 'Error handling pledge click', e);
+                        showToast('error', 'Failed to process pledge.');
+                    }
+                });
             });
 
-            pledgesTakenEl.textContent = takenCount;
-            potentialEl.textContent = totalSavings.toFixed(1);
+            function updatePledgeStats() {
+                try {
+                    const pledgesTakenEl = document.getElementById('pledges-taken');
+                    const potentialEl = document.getElementById('potential-savings');
+
+                    if (!pledgesTakenEl || !potentialEl) {
+                        debugLog('warn', 'Pledge stats elements not found');
+                        return;
+                    }
+
+                    const takenCount = Object.values(pledges).filter(v => v === true).length;
+                    let totalSavings = 0;
+                    Object.keys(pledges).forEach(key => {
+                        if (pledges[key] === true && typeof pledgeSavings[key] === 'number') {
+                            totalSavings += pledgeSavings[key];
+                        }
+                    });
+
+                    if (takenCount > 99) {
+                        pledgesTakenEl.textContent = '99+';
+                    } else {
+                        pledgesTakenEl.textContent = takenCount;
+                    }
+                    potentialEl.textContent = Math.min(totalSavings, 9999).toFixed(1);
+                } catch (e) {
+                    debugLog('error', 'Error updating pledge stats', e);
+                }
+            }
+        } catch (e) {
+            debugLog('error', 'Error initializing pledges', e);
         }
     }
 
@@ -999,26 +1561,60 @@
     // SCROLL REVEAL
     // ========================
 
+    /**
+     * Animates elements into view as user scrolls.
+     * Uses IntersectionObserver for performance.
+     * Accessibility: Only visual enhancement, content still accessible.
+     * Error Handling: Graceful fallback if IntersectionObserver not supported.
+     * 
+     * @returns {void}
+     */
     function initScrollReveal() {
-        const elements = document.querySelectorAll(
-            '.dash-card, .tip-card, .tracker-card, .pledge-card, .section-header'
-        );
+        try {
+            const elements = document.querySelectorAll(
+                '.dash-card, .tip-card, .tracker-card, .pledge-card, .section-header'
+            );
 
-        elements.forEach(el => el.classList.add('reveal'));
+            if (elements.length === 0) {
+                debugLog('warn', 'No reveal elements found');
+                return;
+            }
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('revealed');
-                    observer.unobserve(entry.target);
+            elements.forEach(el => el.classList.add('reveal'));
+
+            // Check if IntersectionObserver is supported
+            if (typeof IntersectionObserver === 'undefined') {
+                debugLog('warn', 'IntersectionObserver not supported, showing all elements immediately');
+                elements.forEach(el => el.classList.add('revealed'));
+                return;
+            }
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    try {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('revealed');
+                            observer.unobserve(entry.target);
+                        }
+                    } catch (e) {
+                        debugLog('error', 'Error processing reveal entry', e);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -40px 0px'
+            });
+
+            elements.forEach(el => {
+                try {
+                    observer.observe(el);
+                } catch (e) {
+                    debugLog('error', 'Error observing element', e);
                 }
             });
-        }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -40px 0px'
-        });
-
-        elements.forEach(el => observer.observe(el));
+        } catch (e) {
+            debugLog('error', 'Error initializing scroll reveal', e);
+        }
     }
 
     // ========================
@@ -1051,16 +1647,35 @@
     // LOAD SAVED DATA
     // ========================
 
+    /**
+     * Safely loads persisted data from localStorage on page load.
+     * Recovers gracefully from corrupted data or missing storage.
+     * 
+     * @returns {void}
+     */
     function loadSavedData() {
         // Load footprint data
-        const saved = localStorage.getItem('ecotrack-footprint');
-        if (saved) {
-            footprintData = JSON.parse(saved);
-            updateDashboard();
+        try {
+            const saved = localStorage.getItem('ecotrack-footprint');
+            if (saved) {
+                footprintData = JSON.parse(saved);
+                // Validate data structure
+                if (footprintData && typeof footprintData.total === 'number') {
+                    updateDashboard();
+                } else {
+                    debugLog('warn', 'Invalid footprint data structure');
+                }
+            }
+        } catch (e) {
+            debugLog('error', 'Failed to load footprint data', e);
         }
 
         // Load tracker data
-        updateTrackerUI();
+        try {
+            updateTrackerUI();
+        } catch (e) {
+            debugLog('error', 'Failed to load tracker data', e);
+        }
     }
 
 })();
